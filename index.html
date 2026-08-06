@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+        バドミントンダブルス管理
+    </title>
+
+    <meta
+        name="theme-color"
+        content="#22c55e">
+
+    <link
+        rel="manifest"
+        href="manifest.json">
+
+    <link
+        rel="stylesheet"
+        href="style.css">
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="header-row">
+
+        <div class="logo">
+            🏸
+        </div>
+
+        <div>
+
+            <h1>
+                バドミントンダブルス管理
+            </h1>
+
+            <p class="subtitle">
+                ダブルス組み合わせ自動生成
+            </p>
+
+        </div>
+
+    </div>
+
+    <button
+        id="installBtn"
+        class="install-btn"
+        style="display:none;">
+
+        アプリをインストール
+
+    </button>
+
+    <nav>
+
+        <button
+            id="tabSettings"
+            class="tab active">
+
+            設定
+
+        </button>
+
+        <button
+            id="tabMatches"
+            class="tab">
+
+            試合
+
+        </button>
+
+        <button
+            id="tabManage"
+            class="tab">
+
+            管理
+
+        </button>
+
+    </nav>
+
+</header>
+
+<main>
+
+    <!-- ===================================== -->
+    <!-- 設定 -->
+    <!-- ===================================== -->
+
+    <section id="settingsPage">
+
+        <div class="card">
+
+            <h2>
+                参加者登録
+            </h2>
+
+            <label>
+                人数から自動登録
+            </label>
+
+            <input
+                type="number"
+                id="autoPlayerCount"
+                min="4"
+                placeholder="例：12">
+
+            <button
+                id="autoCreateBtn">
+
+                番号で登録
+
+            </button>
+
+            <hr class="separator">
+
+            <p class="help-text">
+
+                改行・スペース・カンマ区切りで複数人登録できます
+
+            </p>
+
+            <textarea
+                id="playerInput"
+                placeholder="田中&#10;山田&#10;佐藤"></textarea>
+
+            <button
+                id="addPlayerBtn"
+                class="primary">
+
+                参加者追加
+
+            </button>
+
+            <h3>
+
+                参加人数：
+                <span id="playerCount">
+                    0
+                </span>
+                人
+
+            </h3>
+
+            <ul id="playerList">
+            </ul>
+
+            <button
+                id="clearPlayersBtn"
+                class="danger">
+
+                参加者全削除
+
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <h2>
+                試合設定
+            </h2>
+
+            <label>
+                使用コート数
+            </label>
+
+            <input
+                type="number"
+                id="courtCount"
+                min="1"
+                value="2">
+
+            <label>
+                作成試合数
+            </label>
+
+            <input
+                type="number"
+                id="matchCount"
+                min="1"
+                value="30">
+
+            <label>
+                試合進行方式
+            </label>
+
+            <select id="progressMode">
+
+                <option value="bulk">
+                    一括進行
+                </option>
+
+                <option value="single">
+                    個別進行
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="card">
+
+            <button
+                id="generateBtn"
+                class="primary big-btn">
+
+                対戦表生成
+
+            </button>
+
+            <button
+                id="resetBtn"
+                class="danger big-btn">
+
+                対戦表リセット
+
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- ===================================== -->
+    <!-- 試合 -->
+    <!-- ===================================== -->
+
+    <section
+        id="matchPage"
+        class="hidden">
+
+        <div
+            class="card sticky-card">
+
+            <h2>
+                現在進行中
+            </h2>
+
+            <p>
+
+                残試合：
+                <span id="remainingCount">
+                    0
+                </span>
+
+            </p>
+
+            <div id="courtArea">
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <h2>
+                待機試合
+            </h2>
+
+            <div id="waitingArea">
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <h2>
+
+                終了試合
+                (
+                <span id="finishedCount">
+                    0
+                </span>
+                )
+
+            </h2>
+
+            <button
+                id="toggleFinishedBtn">
+
+                ▼ 展開
+
+            </button>
+
+            <button
+                id="clearFinishedBtn">
+
+                履歴クリア
+
+            </button>
+
+            <div
+                id="finishedContainer"
+                class="hidden">
+
+                <div id="finishedArea">
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <button
+                id="regenerateBtn">
+
+                対戦表を再設定
+
+            </button>
+
+            <button
+                id="csvBtn">
+
+                CSV出力
+
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- ===================================== -->
+    <!-- 管理 -->
+    <!-- ===================================== -->
+
+    <section
+        id="managePage"
+        class="hidden">
+
+        <div class="card">
+
+            <h2>
+                統計
+            </h2>
+
+            <button
+                id="showStatsBtn">
+
+                統計を表示 / 非表示
+
+            </button>
+
+            <div
+                id="statsArea"
+                class="hidden">
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <h2>
+                データ管理
+            </h2>
+
+            <label>
+                自動保存
+            </label>
+
+            <select id="autoSaveSelect">
+
+                <option value="true">
+                    ON
+                </option>
+
+                <option value="false">
+                    OFF
+                </option>
+
+            </select>
+
+            <label>
+                アプリ終了時
+            </label>
+
+            <select id="resetOnExitSelect">
+
+                <option value="false">
+                    保存する
+                </option>
+
+                <option value="true">
+                    リセットする
+                </option>
+
+            </select>
+
+            <button
+                id="darkModeBtn">
+
+                ダークモード切替
+
+            </button>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+
+    <small>
+        Badminton Doubles Manager PWA
+    </small>
+
+</footer>
+
+<!-- ===================================== -->
+<!-- Custom Modal -->
+<!-- ===================================== -->
+
+<div
+    id="modalOverlay"
+    class="modal-overlay hidden">
+
+    <div class="modal">
+
+        <div id="modalMessage">
+
+            メッセージ
+
+        </div>
+
+        <div class="modal-buttons">
+
+            <button
+                id="modalCancel">
+
+                キャンセル
+
+            </button>
+
+            <button
+                id="modalOk">
+
+                OK
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
+
