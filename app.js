@@ -1,15 +1,15 @@
 /* =====================================================
-   Badminton Doubles Manager
-   app.js Complete Edition
-   Part 1
+   Badminton Doubles Manager v6
+   Complete Edition
+   Part 1 / 5
    ===================================================== */
 
 /* =====================================================
-   Storage Keys
+   Storage
    ===================================================== */
 
 const STORAGE_KEY =
-    "badminton_doubles_manager_v4";
+    "badminton_doubles_manager_v6";
 
 /* =====================================================
    Global State
@@ -25,7 +25,13 @@ let finishedMatches = [];
 
 let matchId = 1;
 
+let currentRound = 0;
+
 let deferredPrompt = null;
+
+/* =====================================================
+   Settings
+   ===================================================== */
 
 let settings = {
 
@@ -33,7 +39,11 @@ let settings = {
 
     matchCount: 30,
 
-    progressMode: "bulk"
+    progressMode: "bulk",
+
+    genderMode: "none",
+
+    levelMode: "random"
 
 };
 
@@ -64,6 +74,8 @@ function initializeApp(){
 
     bindEvents();
 
+    bindInstallButton();
+
     restoreSettings();
 
     restoreAppOptions();
@@ -76,9 +88,454 @@ function initializeApp(){
 
     renderStats();
 
+    validateProgressMode();
+
+    validateLevelMode();
+
     registerServiceWorker();
 
 }
+
+/* =====================================================
+   Save Data
+   ===================================================== */
+
+function saveData(){
+
+    if(!appOptions.autoSave){
+        return;
+    }
+
+    saveSettings();
+
+    localStorage.setItem(
+
+        STORAGE_KEY,
+
+        JSON.stringify({
+
+            players,
+
+            waitingMatches,
+
+            activeCourts,
+
+            finishedMatches,
+
+            matchId,
+
+            currentRound,
+
+            settings,
+
+            appOptions
+
+        })
+
+    );
+
+}
+
+/* =====================================================
+   Load Data
+   ===================================================== */
+
+function loadData(){
+
+    const json =
+        localStorage.getItem(
+            STORAGE_KEY
+        );
+
+    if(!json){
+        return;
+    }
+
+    try{
+
+        const data =
+            JSON.parse(json);
+
+        players =
+            data.players || [];
+
+        waitingMatches =
+            data.waitingMatches || [];
+
+        activeCourts =
+            data.activeCourts || [];
+
+        finishedMatches =
+            data.finishedMatches || [];
+
+        matchId =
+            data.matchId || 1;
+
+        currentRound =
+            data.currentRound || 0;
+
+        settings =
+            data.settings || settings;
+
+        appOptions =
+            data.appOptions || appOptions;
+
+    }
+    catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+/* =====================================================
+   Settings
+   ===================================================== */
+
+function saveSettings(){
+
+    settings.courtCount =
+        Number(
+            document
+            .getElementById(
+                "courtCount"
+            ).value
+        );
+
+    settings.matchCount =
+        Number(
+            document
+            .getElementById(
+                "matchCount"
+            ).value
+        );
+
+    settings.progressMode =
+        document
+        .getElementById(
+            "progressMode"
+        ).value;
+
+    settings.genderMode =
+        document
+        .getElementById(
+            "genderMode"
+        ).value;
+
+    settings.levelMode =
+        document
+        .getElementById(
+            "levelMode"
+        ).value;
+
+}
+
+function restoreSettings(){
+
+    document
+        .getElementById(
+            "courtCount"
+        ).value =
+        settings.courtCount;
+
+    document
+        .getElementById(
+            "matchCount"
+        ).value =
+        settings.matchCount;
+
+    document
+        .getElementById(
+            "progressMode"
+        ).value =
+        settings.progressMode;
+
+    document
+        .getElementById(
+            "genderMode"
+        ).value =
+        settings.genderMode;
+
+    document
+        .getElementById(
+            "levelMode"
+        ).value =
+        settings.levelMode;
+
+}
+
+/* =====================================================
+   App Options
+   ===================================================== */
+
+function restoreAppOptions(){
+
+    const autoSaveSelect =
+        document.getElementById(
+            "autoSaveSelect"
+        );
+
+    const resetSelect =
+        document.getElementById(
+            "resetOnExitSelect"
+        );
+
+    if(autoSaveSelect){
+
+        autoSaveSelect.value =
+            appOptions.autoSave
+            ? "true"
+            : "false";
+
+    }
+
+    if(resetSelect){
+
+        resetSelect.value =
+            appOptions.resetOnExit
+            ? "true"
+            : "false";
+
+    }
+
+}
+
+function updateAppOptions(){
+
+    appOptions.autoSave =
+
+        document
+        .getElementById(
+            "autoSaveSelect"
+        ).value === "true";
+
+    appOptions.resetOnExit =
+
+        document
+        .getElementById(
+            "resetOnExitSelect"
+        ).value === "true";
+
+    saveData();
+
+}
+
+/* =====================================================
+   Utility
+   ===================================================== */
+
+function shuffle(array){
+
+    const copy =
+        [...array];
+
+    for(
+        let i = copy.length - 1;
+        i > 0;
+        i--
+    ){
+
+        const j =
+            Math.floor(
+                Math.random() *
+                (i + 1)
+            );
+
+        [
+            copy[i],
+            copy[j]
+        ] =
+        [
+            copy[j],
+            copy[i]
+        ];
+
+    }
+
+    return copy;
+
+}
+
+function getActivePlayers(){
+
+    return players.filter(
+        player => player.active
+    );
+
+}
+
+function findPlayer(name){
+
+    return players.find(
+        player =>
+        player.name === name
+    );
+
+}
+
+function getLevelGroup(level){
+
+    if(level <= 2){
+        return 1;
+    }
+
+    if(level <= 4){
+        return 2;
+    }
+
+    return 3;
+
+}
+
+/* =====================================================
+   Tabs
+   ===================================================== */
+
+function bindTabs(){
+
+    document
+        .getElementById(
+            "tabSettings"
+        )
+        ?.addEventListener(
+            "click",
+            () =>
+                switchTab(
+                    "settings"
+                )
+        );
+
+    document
+        .getElementById(
+            "tabMatches"
+        )
+        ?.addEventListener(
+            "click",
+            () =>
+                switchTab(
+                    "matches"
+                )
+        );
+
+    document
+        .getElementById(
+            "tabManage"
+        )
+        ?.addEventListener(
+            "click",
+            () =>
+                switchTab(
+                    "manage"
+                )
+        );
+
+}
+
+function switchTab(page){
+
+    document
+        .getElementById(
+            "settingsPage"
+        )
+        .classList.add(
+            "hidden"
+        );
+
+    document
+        .getElementById(
+            "matchPage"
+        )
+        .classList.add(
+            "hidden"
+        );
+
+    document
+        .getElementById(
+            "managePage"
+        )
+        .classList.add(
+            "hidden"
+        );
+
+    document
+        .querySelectorAll(
+            ".tab"
+        )
+        .forEach(tab => {
+
+            tab.classList.remove(
+                "active"
+            );
+
+        });
+
+    if(page==="settings"){
+
+        document
+            .getElementById(
+                "settingsPage"
+            )
+            .classList.remove(
+                "hidden"
+            );
+
+        document
+            .getElementById(
+                "tabSettings"
+            )
+            .classList.add(
+                "active"
+            );
+
+    }
+
+    if(page==="matches"){
+
+        document
+            .getElementById(
+                "matchPage"
+            )
+            .classList.remove(
+                "hidden"
+            );
+
+        document
+            .getElementById(
+                "tabMatches"
+            )
+            .classList.add(
+                "active"
+            );
+
+    }
+
+    if(page==="manage"){
+
+        document
+            .getElementById(
+                "managePage"
+            )
+            .classList.remove(
+                "hidden"
+            );
+
+        document
+            .getElementById(
+                "tabManage"
+            )
+            .classList.add(
+                "active"
+            );
+
+    }
+
+}
+/* =====================================================
+   Badminton Doubles Manager v6
+   Complete Edition
+   Part 2 / 5
+   ===================================================== */
 
 /* =====================================================
    Event Binding
@@ -88,14 +545,17 @@ function bindEvents(){
 
     bindTabs();
 
-    const bind = (
+    const bind =
+    (
         id,
         event,
         handler
     ) => {
 
         const element =
-            document.getElementById(id);
+            document.getElementById(
+                id
+            );
 
         if(element){
 
@@ -186,430 +646,269 @@ function bindEvents(){
         updateAppOptions
     );
 
-}
-
-/* =====================================================
-   Tabs
-   ===================================================== */
-
-function bindTabs(){
-
-    document
-        .getElementById(
-            "tabSettings"
-        )
-        ?.addEventListener(
-            "click",
-            () => switchTab(
-                "settings"
-            )
-        );
-
-    document
-        .getElementById(
-            "tabMatches"
-        )
-        ?.addEventListener(
-            "click",
-            () => switchTab(
-                "matches"
-            )
-        );
-
-    document
-        .getElementById(
-            "tabManage"
-        )
-        ?.addEventListener(
-            "click",
-            () => switchTab(
-                "manage"
-            )
-        );
-
-}
-
-function switchTab(page){
-
-    document
-        .getElementById(
-            "settingsPage"
-        )
-        .classList.add(
-            "hidden"
-        );
-
-    document
-        .getElementById(
-            "matchPage"
-        )
-        .classList.add(
-            "hidden"
-        );
-
-    document
-        .getElementById(
-            "managePage"
-        )
-        .classList.add(
-            "hidden"
-        );
-
-    document
-        .querySelectorAll(".tab")
-        .forEach(tab=>{
-
-            tab.classList.remove(
-                "active"
-            );
-
-        });
-
-    if(page==="settings"){
-
-        document
-            .getElementById(
-                "settingsPage"
-            )
-            .classList.remove(
-                "hidden"
-            );
-
-        document
-            .getElementById(
-                "tabSettings"
-            )
-            .classList.add(
-                "active"
-            );
-
-    }
-
-    if(page==="matches"){
-
-        document
-            .getElementById(
-                "matchPage"
-            )
-            .classList.remove(
-                "hidden"
-            );
-
-        document
-            .getElementById(
-                "tabMatches"
-            )
-            .classList.add(
-                "active"
-            );
-
-    }
-
-    if(page==="manage"){
-
-        document
-            .getElementById(
-                "managePage"
-            )
-            .classList.remove(
-                "hidden"
-            );
-
-        document
-            .getElementById(
-                "tabManage"
-            )
-            .classList.add(
-                "active"
-            );
-
-    }
-
-}
-
-/* =====================================================
-   Settings
-   ===================================================== */
-
-function saveSettings(){
-
-    settings.courtCount =
-
-        Number(
-            document
-            .getElementById(
-                "courtCount"
-            )
-            .value
-        );
-
-    settings.matchCount =
-
-        Number(
-            document
-            .getElementById(
-                "matchCount"
-            )
-            .value
-        );
-
-    settings.progressMode =
-
-        document
-        .getElementById(
-            "progressMode"
-        )
-        .value;
-
-}
-
-function restoreSettings(){
-
-    document
-        .getElementById(
-            "courtCount"
-        )
-        .value =
-        settings.courtCount;
-
-    document
-        .getElementById(
-            "matchCount"
-        )
-        .value =
-        settings.matchCount;
-
-    document
-        .getElementById(
-            "progressMode"
-        )
-        .value =
-        settings.progressMode;
-
-}
-
-/* =====================================================
-   App Options
-   ===================================================== */
-
-function updateAppOptions(){
-
-    appOptions.autoSave =
-
-        document
-        .getElementById(
-            "autoSaveSelect"
-        )
-        .value === "true";
-
-    appOptions.resetOnExit =
-
-        document
-        .getElementById(
-            "resetOnExitSelect"
-        )
-        .value === "true";
-
-    saveData();
-
-}
-
-function restoreAppOptions(){
-
-    const autoSaveSelect =
-        document.getElementById(
-            "autoSaveSelect"
-        );
-
-    const resetSelect =
-        document.getElementById(
-            "resetOnExitSelect"
-        );
-
-    if(autoSaveSelect){
-
-        autoSaveSelect.value =
-            appOptions.autoSave
-            ? "true"
-            : "false";
-
-    }
-
-    if(resetSelect){
-
-        resetSelect.value =
-            appOptions.resetOnExit
-            ? "true"
-            : "false";
-
-    }
-
-}
-
-/* =====================================================
-   Storage
-   ===================================================== */
-
-function saveData(){
-
-    if(
-        !appOptions.autoSave
-    ){
-        return;
-    }
-
-    saveSettings();
-
-    localStorage.setItem(
-
-        STORAGE_KEY,
-
-        JSON.stringify({
-
-            players,
-
-            settings,
-
-            appOptions,
-
-            waitingMatches,
-
-            activeCourts,
-
-            finishedMatches,
-
-            matchId
-
-        })
-
+    bind(
+        "courtCount",
+        "change",
+        validateProgressMode
+    );
+
+    bind(
+        "genderMode",
+        "change",
+        validateLevelMode
+    );
+
+    bind(
+        "levelMode",
+        "change",
+        validateLevelMode
     );
 
 }
 
-function loadData(){
+/* =====================================================
+   Progress Mode Validation
+   ===================================================== */
 
-    const json =
-        localStorage.getItem(
-            STORAGE_KEY
+function validateProgressMode(){
+
+    const courtCount =
+        Number(
+            document
+            .getElementById(
+                "courtCount"
+            )?.value || 1
         );
 
-    if(!json){
+    const activePlayers =
+        getActivePlayers()
+        .length;
+
+    const progressMode =
+        document
+        .getElementById(
+            "progressMode"
+        );
+
+    const warning =
+        document
+        .getElementById(
+            "progressWarning"
+        );
+
+    if(
+        !progressMode ||
+        !warning
+    ){
         return;
     }
 
-    try{
-
-        const data =
-            JSON.parse(json);
-
-        players =
-            data.players || [];
-
-        settings =
-            data.settings || settings;
-
-        appOptions =
-            data.appOptions || appOptions;
-
-        waitingMatches =
-            data.waitingMatches || [];
-
-        activeCourts =
-            data.activeCourts || [];
-
-        finishedMatches =
-            data.finishedMatches || [];
-
-        matchId =
-            data.matchId || 1;
-
-    }
-    catch(error){
-
-        console.error(
-            error
+    const singleOption =
+        progressMode.querySelector(
+            'option[value="single"]'
         );
 
-    }
+    singleOption.disabled =
+        false;
 
-}
-/* =====================================================
-   Part 2
-   Modal / PWA / Theme
-   ===================================================== */
+    warning.classList.add(
+        "hidden"
+    );
 
-/* =====================================================
-   Custom Confirm
-   ===================================================== */
+    if(
+        courtCount === 1
+    ){
 
-function showConfirm(message){
+        progressMode.value =
+            "bulk";
 
-    return new Promise(resolve => {
+        singleOption.disabled =
+            true;
 
-        const overlay =
-            document.getElementById(
-                "modalOverlay"
-            );
+        warning.textContent =
+            "1コートのみの利用時は一括進行のみ";
 
-        const modalMessage =
-            document.getElementById(
-                "modalMessage"
-            );
-
-        const okButton =
-            document.getElementById(
-                "modalOk"
-            );
-
-        const cancelButton =
-            document.getElementById(
-                "modalCancel"
-            );
-
-        modalMessage.textContent =
-            message;
-
-        overlay.classList.remove(
+        warning.classList.remove(
             "hidden"
         );
 
-        const closeModal = (
-            result
-        ) => {
+        return;
+    }
 
-            overlay.classList.add(
-                "hidden"
-            );
+    if(
+        activePlayers <
+        courtCount * 8
+    ){
 
-            okButton.onclick =
-                null;
+        progressMode.value =
+            "bulk";
 
-            cancelButton.onclick =
-                null;
+        singleOption.disabled =
+            true;
 
-            resolve(result);
+        warning.textContent =
+            "参加人数が規定未満の為一括進行のみ";
 
-        };
+        warning.classList.remove(
+            "hidden"
+        );
 
-        okButton.onclick =
-            () => closeModal(
-                true
-            );
-
-        cancelButton.onclick =
-            () => closeModal(
-                false
-            );
-
-    });
+        return;
+    }
 
 }
 
 /* =====================================================
-   Simple Alert
+   Level Mode Validation
    ===================================================== */
 
-async function showAlert(message){
+function validateLevelMode(){
+
+    const genderMode =
+        document
+        .getElementById(
+            "genderMode"
+        );
+
+    const levelMode =
+        document
+        .getElementById(
+            "levelMode"
+        );
+
+    const warning =
+        document
+        .getElementById(
+            "levelModeWarning"
+        );
+
+    if(
+        !genderMode ||
+        !levelMode ||
+        !warning
+    ){
+        return;
+    }
+
+    const unifiedOption =
+        levelMode.querySelector(
+            'option[value="unified"]'
+        );
+
+    if(
+        genderMode.value ===
+        "mixed"
+    ){
+
+        unifiedOption.disabled =
+            true;
+
+        if(
+            levelMode.value ===
+            "unified"
+        ){
+
+            levelMode.value =
+                "balance";
+        }
+
+        warning.classList.remove(
+            "hidden"
+        );
+
+    }
+    else{
+
+        unifiedOption.disabled =
+            false;
+
+        warning.classList.add(
+            "hidden"
+        );
+
+    }
+
+    saveSettings();
+
+}
+
+/* =====================================================
+   Modal
+   ===================================================== */
+
+function showConfirm(
+    message
+){
+
+    return new Promise(
+        resolve => {
+
+            const overlay =
+                document.getElementById(
+                    "modalOverlay"
+                );
+
+            const modalMessage =
+                document.getElementById(
+                    "modalMessage"
+                );
+
+            const okButton =
+                document.getElementById(
+                    "modalOk"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "modalCancel"
+                );
+
+            modalMessage.textContent =
+                message;
+
+            overlay.classList.remove(
+                "hidden"
+            );
+
+            const closeModal =
+            (
+                result
+            ) => {
+
+                overlay.classList.add(
+                    "hidden"
+                );
+
+                okButton.onclick =
+                    null;
+
+                cancelButton.onclick =
+                    null;
+
+                resolve(result);
+
+            };
+
+            okButton.onclick =
+                () =>
+                closeModal(
+                    true
+                );
+
+            cancelButton.onclick =
+                () =>
+                closeModal(
+                    false
+                );
+
+        }
+    );
+
+}
+
+async function showAlert(
+    message
+){
 
     await showConfirm(
         message
@@ -618,30 +917,7 @@ async function showAlert(message){
 }
 
 /* =====================================================
-   Clear Finished Matches
-   ===================================================== */
-
-async function clearFinishedMatches(){
-
-    const result =
-        await showConfirm(
-            "終了試合履歴を削除しますか？"
-        );
-
-    if(!result){
-        return;
-    }
-
-    finishedMatches = [];
-
-    saveData();
-
-    renderFinishedMatches();
-
-}
-
-/* =====================================================
-   Toggle Finished Matches
+   Finished Matches
    ===================================================== */
 
 function toggleFinishedMatches(){
@@ -675,13 +951,31 @@ function toggleFinishedMatches(){
 
         button.textContent =
             "▼ 展開";
-
-    }else{
+    }
+    else{
 
         button.textContent =
             "▲ 閉じる";
-
     }
+
+}
+
+async function clearFinishedMatches(){
+
+    const result =
+        await showConfirm(
+            "終了試合履歴を削除しますか？"
+        );
+
+    if(!result){
+        return;
+    }
+
+    finishedMatches = [];
+
+    saveData();
+
+    renderFinishedMatches();
 
 }
 
@@ -717,7 +1011,6 @@ function toggleDarkMode(){
     );
 
     const enabled =
-
         document.body.classList.contains(
             "dark-mode"
         );
@@ -732,7 +1025,6 @@ function toggleDarkMode(){
 function applySavedTheme(){
 
     const darkMode =
-
         localStorage.getItem(
             "darkMode"
         );
@@ -754,7 +1046,9 @@ function applySavedTheme(){
    ===================================================== */
 
 window.addEventListener(
+
     "beforeinstallprompt",
+
     event => {
 
         event.preventDefault();
@@ -775,6 +1069,7 @@ window.addEventListener(
         }
 
     }
+
 );
 
 function bindInstallButton(){
@@ -826,17 +1121,14 @@ function registerServiceWorker(){
         return;
     }
 
-    navigator.serviceWorker
+    navigator
+        .serviceWorker
         .register(
             "./service-worker.js"
         )
-        .catch(error => {
-
-            console.error(
-                error
-            );
-
-        });
+        .catch(
+            console.error
+        );
 
 }
 
@@ -845,7 +1137,9 @@ function registerServiceWorker(){
    ===================================================== */
 
 window.addEventListener(
+
     "beforeunload",
+
     () => {
 
         if(
@@ -859,15 +1153,55 @@ window.addEventListener(
         );
 
     }
+
 );
 /* =====================================================
-   Part 3
-   Player Management
+   Badminton Doubles Manager v6
+   Complete Edition
+   Part 3 / 5
    ===================================================== */
 
 /* =====================================================
-   Add Players
+   Player Add
    ===================================================== */
+
+function createPlayer(
+    name,
+    id
+){
+
+    return {
+
+        id:
+
+            id ||
+            (
+                Date.now()
+                +
+                Math.random()
+            ),
+
+        name,
+
+        active:true,
+
+        gender:"none",
+
+        level:2,
+
+        played:0,
+
+        rested:0,
+
+        lastMatchRound:-999,
+
+        partners:{},
+
+        opponents:{}
+
+    };
+
+}
 
 function addPlayers(){
 
@@ -881,9 +1215,18 @@ function addPlayers(){
     }
 
     const names =
+
         input.value
-        .split(/[\n,\s、]+/)
-        .map(name => name.trim())
+
+        .split(
+            /[\n,\s、]+/
+        )
+
+        .map(
+            name =>
+            name.trim()
+        )
+
         .filter(Boolean);
 
     if(
@@ -892,9 +1235,10 @@ function addPlayers(){
         return;
     }
 
-    names.forEach(name=>{
+    names.forEach(name => {
 
         const exists =
+
             players.some(
                 player =>
                 player.name === name
@@ -904,26 +1248,9 @@ function addPlayers(){
             return;
         }
 
-        players.push({
-
-            id:
-                Date.now()
-                +
-                Math.random(),
-
-            name,
-
-            active:true,
-
-            played:0,
-
-            rested:0,
-
-            partners:{},
-
-            opponents:{}
-
-        });
+        players.push(
+            createPlayer(name)
+        );
 
     });
 
@@ -935,6 +1262,8 @@ function addPlayers(){
 
     renderStats();
 
+    validateProgressMode();
+
 }
 
 /* =====================================================
@@ -943,27 +1272,27 @@ function addPlayers(){
 
 async function autoCreatePlayers(){
 
-    const count = Number(
+    const count =
+        Number(
+            document
+            .getElementById(
+                "autoPlayerCount"
+            ).value
+        );
 
-        document
-        .getElementById(
-            "autoPlayerCount"
-        )
-        .value
-
-    );
-
-    if(count < 4){
+    if(
+        count < 4
+    ){
 
         await showAlert(
             "4人以上入力してください"
         );
 
         return;
-
     }
 
     const result =
+
         await showConfirm(
             `${count}人を番号で登録しますか？`
         );
@@ -980,23 +1309,12 @@ async function autoCreatePlayers(){
         i++
     ){
 
-        players.push({
-
-            id:i,
-
-            name:String(i),
-
-            active:true,
-
-            played:0,
-
-            rested:0,
-
-            partners:{},
-
-            opponents:{}
-
-        });
+        players.push(
+            createPlayer(
+                String(i),
+                i
+            )
+        );
 
     }
 
@@ -1006,15 +1324,18 @@ async function autoCreatePlayers(){
 
     renderStats();
 
+    validateProgressMode();
+
 }
 
 /* =====================================================
-   Delete One Player
+   Delete Player
    ===================================================== */
 
 async function deletePlayer(id){
 
     const result =
+
         await showConfirm(
             "この参加者を削除しますか？"
         );
@@ -1024,9 +1345,13 @@ async function deletePlayer(id){
     }
 
     players =
+
         players.filter(
+
             player =>
+
             player.id !== id
+
         );
 
     saveData();
@@ -1035,15 +1360,18 @@ async function deletePlayer(id){
 
     renderStats();
 
+    validateProgressMode();
+
 }
 
 /* =====================================================
-   Delete All Players
+   Clear Players
    ===================================================== */
 
 async function clearPlayers(){
 
     const result =
+
         await showConfirm(
             "参加者をすべて削除しますか？"
         );
@@ -1060,6 +1388,8 @@ async function clearPlayers(){
 
     finishedMatches = [];
 
+    currentRound = 0;
+
     matchId = 1;
 
     saveData();
@@ -1070,18 +1400,23 @@ async function clearPlayers(){
 
     renderStats();
 
+    validateProgressMode();
+
 }
 
 /* =====================================================
-   Toggle Attendance
+   Toggle Active
    ===================================================== */
 
 function togglePlayer(id){
 
     const player =
+
         players.find(
+
             player =>
             player.id === id
+
         );
 
     if(!player){
@@ -1095,25 +1430,104 @@ function togglePlayer(id){
 
     renderPlayers();
 
+    validateProgressMode();
+
 }
 
 /* =====================================================
-   Reset Statistics
+   Gender Update
    ===================================================== */
 
-function resetPlayerStats(){
+function setPlayerGender(
+    id,
+    gender
+){
 
-    players.forEach(player => {
+    const player =
 
-        player.played = 0;
+        players.find(
+            p => p.id === id
+        );
 
-        player.rested = 0;
+    if(!player){
+        return;
+    }
 
-        player.partners = {};
+    player.gender =
+        gender;
 
-        player.opponents = {};
+    saveData();
 
-    });
+}
+
+/* =====================================================
+   Level Update
+   ===================================================== */
+
+function setPlayerLevel(
+    id,
+    level
+){
+
+    const player =
+
+        players.find(
+            p => p.id === id
+        );
+
+    if(!player){
+        return;
+    }
+
+    player.level =
+        level;
+
+    saveData();
+
+    renderPlayers();
+
+}
+
+/* =====================================================
+   Stars
+   ===================================================== */
+
+function renderStars(
+    player
+){
+
+    let html = "";
+
+    for(
+        let i=1;
+        i<=5;
+        i++
+    ){
+
+        html += `
+
+            <span
+                class="
+                    star
+                    ${i<=player.level
+                        ? "active"
+                        : ""}
+                "
+                onclick="
+                    setPlayerLevel(
+                        ${player.id},
+                        ${i}
+                    )
+                "
+            >
+                ★
+            </span>
+
+        `;
+
+    }
+
+    return html;
 
 }
 
@@ -1124,11 +1538,13 @@ function resetPlayerStats(){
 function renderPlayers(){
 
     const playerList =
+
         document.getElementById(
             "playerList"
         );
 
     const playerCount =
+
         document.getElementById(
             "playerCount"
         );
@@ -1140,47 +1556,10 @@ function renderPlayers(){
         return;
     }
 
-    playerList.innerHTML = "";
-
     playerCount.textContent =
         players.length;
 
-    const numberOnlyMode =
-
-        players.length > 0 &&
-
-        players.every(
-            player =>
-            /^\d+$/
-            .test(player.name)
-        );
-
-    if(numberOnlyMode){
-
-        const li =
-            document.createElement(
-                "li"
-            );
-
-        li.innerHTML = `
-
-            <strong>
-
-                参加人数：
-                ${players.length}
-                人
-
-            </strong>
-
-        `;
-
-        playerList.appendChild(
-            li
-        );
-
-        return;
-
-    }
+    playerList.innerHTML = "";
 
     players.forEach(player => {
 
@@ -1191,24 +1570,89 @@ function renderPlayers(){
 
         li.innerHTML = `
 
-            <label>
+            <div class="player-row">
 
                 <input
                     type="checkbox"
-                    ${player.active ? "checked" : ""}
-                    onchange="togglePlayer(${player.id})">
+                    ${
+                        player.active
+                        ? "checked"
+                        : ""
+                    }
+                    onchange="
+                        togglePlayer(
+                            ${player.id}
+                        )
+                    "
+                >
 
-                ${player.name}
+                <span class="player-name">
+                    ${player.name}
+                </span>
 
-            </label>
+                <select
+                    class="gender-select"
+                    onchange="
+                        setPlayerGender(
+                            ${player.id},
+                            this.value
+                        )
+                    "
+                >
 
-            <button
-                class="delete-btn"
-                onclick="deletePlayer(${player.id})">
+                    <option
+                        value="none"
+                        ${
+                            player.gender==="none"
+                            ? "selected"
+                            : ""
+                        }
+                    >
+                        -
+                    </option>
 
-                🗑
+                    <option
+                        value="male"
+                        ${
+                            player.gender==="male"
+                            ? "selected"
+                            : ""
+                        }
+                    >
+                        男
+                    </option>
 
-            </button>
+                    <option
+                        value="female"
+                        ${
+                            player.gender==="female"
+                            ? "selected"
+                            : ""
+                        }
+                    >
+                        女
+                    </option>
+
+                </select>
+
+                <div class="star-area">
+
+                    ${renderStars(player)}
+
+                </div>
+
+                <button
+                    class="delete-btn"
+                    onclick="
+                        deletePlayer(
+                            ${player.id}
+                        )
+                    "
+                >
+                    🗑
+                </button>
+
+            </div>
 
         `;
 
@@ -1219,13 +1663,53 @@ function renderPlayers(){
     });
 
 }
+
 /* =====================================================
-   Part 4
-   Match Generation Engine
+   Statistics Reset
+   ===================================================== */
+
+function resetPlayerStats(){
+
+    players.forEach(player => {
+
+        player.played = 0;
+
+        player.rested = 0;
+
+        player.lastMatchRound = -999;
+
+        player.partners = {};
+
+        player.opponents = {};
+
+    });
+
+}
+
+/* =====================================================
+   Global Access
+   ===================================================== */
+
+window.togglePlayer =
+    togglePlayer;
+
+window.deletePlayer =
+    deletePlayer;
+
+window.setPlayerGender =
+    setPlayerGender;
+
+window.setPlayerLevel =
+    setPlayerLevel;
+/* =====================================================
+   Badminton Doubles Manager v6
+   Complete Edition
+   Part 4 / 5
+   Match Engine
    ===================================================== */
 
 /* =====================================================
-   Generate Schedule
+   Match Generation
    ===================================================== */
 
 async function generateSchedule(){
@@ -1233,12 +1717,11 @@ async function generateSchedule(){
     saveSettings();
 
     const activePlayers =
+        getActivePlayers();
 
-        players.filter(
-            player => player.active
-        );
-
-    if(activePlayers.length < 4){
+    if(
+        activePlayers.length < 4
+    ){
 
         await showAlert(
             "参加者は4人以上必要です"
@@ -1253,6 +1736,8 @@ async function generateSchedule(){
     activeCourts = [];
 
     finishedMatches = [];
+
+    currentRound = 0;
 
     matchId = 1;
 
@@ -1292,70 +1777,95 @@ async function generateSchedule(){
 }
 
 /* =====================================================
-   Create Best Match
+   Create Match
    ===================================================== */
 
 function createBestMatch(){
 
-    const availablePlayers =
-
-        players.filter(
-            player => player.active
-        );
+    const activePlayers =
+        getActivePlayers();
 
     if(
-        availablePlayers.length < 4
+        activePlayers.length < 4
     ){
         return null;
     }
 
-    let bestGroup = null;
+    let bestMatch = null;
 
     let bestScore =
         Number.MAX_SAFE_INTEGER;
 
+    const stages = [
+
+        {
+            levelStrict:true,
+            mixedStrict:true
+        },
+
+        {
+            levelStrict:false,
+            mixedStrict:true
+        },
+
+        {
+            levelStrict:false,
+            mixedStrict:false
+        }
+
+    ];
+
     for(
-        let attempt = 0;
-        attempt < 1000;
-        attempt++
+        const stage of stages
     ){
 
-        const group =
-
-            shuffle(
-                availablePlayers
-            ).slice(
-                0,
-                4
-            );
-
-        const score =
-            evaluateGroup(
-                group
-            );
-
-        if(
-            score <
-            bestScore
+        for(
+            let i=0;
+            i<1000;
+            i++
         ){
 
-            bestScore =
-                score;
+            const group =
+                shuffle(
+                    activePlayers
+                ).slice(
+                    0,
+                    4
+                );
 
-            bestGroup =
-                group;
+            const score =
+                evaluateGroup(
+                    group,
+                    stage
+                );
 
+            if(
+                score <
+                bestScore
+            ){
+
+                bestScore =
+                    score;
+
+                bestMatch =
+                    buildMatch(
+                        group
+                    );
+
+            }
+
+        }
+
+        if(
+            bestMatch &&
+            bestScore < 999999
+        ){
+            break;
         }
 
     }
 
-    if(!bestGroup){
-        return null;
-    }
-
-    return buildMatch(
-        bestGroup
-    );
+    return bestMatch;
 
 }
 
@@ -1363,7 +1873,10 @@ function createBestMatch(){
    Evaluate Group
    ===================================================== */
 
-function evaluateGroup(group){
+function evaluateGroup(
+    group,
+    options
+){
 
     let score = 0;
 
@@ -1373,12 +1886,12 @@ function evaluateGroup(group){
         );
 
     score +=
-        restBalanceScore(
+        restScore(
             group
         );
 
     score +=
-        pairingScore(
+        consecutiveScore(
             group
         );
 
@@ -1387,138 +1900,142 @@ function evaluateGroup(group){
             group
         );
 
+    score +=
+        pairScore(
+            group
+        );
+
+    score +=
+        genderScore(
+            group,
+            options
+        );
+
+    score +=
+        levelScore(
+            group,
+            options
+        );
+
     return score;
 
 }
 
 /* =====================================================
-   Match Build
+   Played Balance
    ===================================================== */
 
-function buildMatch(group){
-
-    const teamA = [
-
-        group[0].name,
-
-        group[1].name
-
-    ];
-
-    const teamB = [
-
-        group[2].name,
-
-        group[3].name
-
-    ];
-
-    updateStatistics(
-        teamA,
-        teamB
-    );
-
-    return {
-
-        id: matchId++,
-
-        teamA,
-
-        teamB,
-
-        status: "waiting"
-
-    };
-
-}
-
-/* =====================================================
-   Fairness Score
-   ===================================================== */
-
-function appearanceScore(group){
+function appearanceScore(
+    group
+){
 
     const values =
-
         group.map(
-            player =>
-            player.played
+            p=>p.played
         );
 
-    const max =
-        Math.max(...values);
-
-    const min =
-        Math.min(...values);
-
     return (
-        max - min
+        Math.max(...values)
+        -
+        Math.min(...values)
     ) * 150;
 
 }
 
-function restBalanceScore(group){
+/* =====================================================
+   Rest Balance
+   ===================================================== */
+
+function restScore(
+    group
+){
 
     const values =
-
         group.map(
-            player =>
-            player.rested
+            p=>p.rested
         );
 
-    const max =
-        Math.max(...values);
-
-    const min =
-        Math.min(...values);
-
     return (
-        max - min
-    ) * 50;
+        Math.max(...values)
+        -
+        Math.min(...values)
+    ) * 80;
 
 }
 
 /* =====================================================
-   Duplicate Pair Check
+   Consecutive Penalty
    ===================================================== */
 
-function pairingScore(group){
+function consecutiveScore(
+    group
+){
+
+    let score = 0;
+
+    group.forEach(player=>{
+
+        const diff =
+
+            currentRound
+            -
+            player.lastMatchRound;
+
+        if(diff <= 1){
+
+            score += 1000;
+
+        }
+
+    });
+
+    return score;
+
+}
+
+/* =====================================================
+   Pair Restriction
+   ===================================================== */
+
+function pairScore(
+    group
+){
 
     const a = group[0];
-
     const b = group[1];
 
     const c = group[2];
-
     const d = group[3];
 
-    const pairA =
+    const pair1 =
+        a.partners[
+            b.name
+        ] || 0;
 
-        (
-            a.partners[
-                b.name
-            ] || 0
-        ) * 400;
+    const pair2 =
+        c.partners[
+            d.name
+        ] || 0;
 
-    const pairB =
+    let score = 0;
 
-        (
-            c.partners[
-                d.name
-            ] || 0
-        ) * 400;
+    score += pair1 * 5000;
 
-    return pairA + pairB;
+    score += pair2 * 5000;
+
+    return score;
 
 }
 
 /* =====================================================
-   Duplicate Opponent Check
+   Opponent Penalty
    ===================================================== */
 
-function opponentScore(group){
+function opponentScore(
+    group
+){
 
-    let total = 0;
+    let score = 0;
 
     for(
         let i=0;
@@ -1532,13 +2049,14 @@ function opponentScore(group){
             j++
         ){
 
-            total +=
+            score +=
 
                 (
                     group[i]
                     .opponents[
                         group[j].name
-                    ] || 0
+                    ]
+                    || 0
                 )
 
                 * 100;
@@ -1547,247 +2065,200 @@ function opponentScore(group){
 
     }
 
-    return total;
+    return score;
 
 }
 
 /* =====================================================
-   Utility Shuffle
+   Mixed Priority
    ===================================================== */
 
-function shuffle(array){
+function genderScore(
+    group,
+    options
+){
 
-    const copy = [...array];
+    if(
+        settings.genderMode !==
+        "mixed"
+    ){
+        return 0;
+    }
 
-    for(
+    const a = group[0];
+    const b = group[1];
 
-        let i =
-        copy.length - 1;
+    const c = group[2];
+    const d = group[3];
 
-        i > 0;
+    let score = 0;
 
-        i--
+    const team1Mixed =
 
+        a.gender !== "none" &&
+        b.gender !== "none" &&
+        a.gender !== b.gender;
+
+    const team2Mixed =
+
+        c.gender !== "none" &&
+        d.gender !== "none" &&
+        c.gender !== d.gender;
+
+    if(!team1Mixed){
+
+        score +=
+            options.mixedStrict
+            ? 1500
+            : 500;
+
+    }
+
+    if(!team2Mixed){
+
+        score +=
+            options.mixedStrict
+            ? 1500
+            : 500;
+
+    }
+
+    return score;
+
+}
+
+/* =====================================================
+   Level Score
+   ===================================================== */
+
+function levelScore(
+    group,
+    options
+){
+
+    if(
+        settings.levelMode ===
+        "random"
+    ){
+        return 0;
+    }
+
+    const a = group[0];
+    const b = group[1];
+
+    const c = group[2];
+    const d = group[3];
+
+    if(
+        settings.levelMode ===
+        "balance"
     ){
 
-        const j =
+        const teamA =
+            a.level +
+            b.level;
 
-            Math.floor(
-                Math.random()
-                *
-                (
-                    i + 1
-                )
-            );
+        const teamB =
+            c.level +
+            d.level;
 
-        [
+        return (
+            Math.abs(
+                teamA - teamB
+            )
+            * 200
+        );
 
-            copy[i],
+    }
 
-            copy[j]
+    if(
+        settings.levelMode ===
+        "unified"
+    ){
 
-        ] = [
+        const groups = [
 
-            copy[j],
+            getLevelGroup(
+                a.level
+            ),
 
-            copy[i]
+            getLevelGroup(
+                b.level
+            ),
+
+            getLevelGroup(
+                c.level
+            ),
+
+            getLevelGroup(
+                d.level
+            )
 
         ];
 
-    }
+        const diff =
 
-    return copy;
-
-}
-
-/* =====================================================
-   Statistics Update
-   ===================================================== */
-
-function updateStatistics(
-    teamA,
-    teamB
-){
-
-    const participants = [
-
-        findPlayer(
-            teamA[0]
-        ),
-
-        findPlayer(
-            teamA[1]
-        ),
-
-        findPlayer(
-            teamB[0]
-        ),
-
-        findPlayer(
-            teamB[1]
-        )
-
-    ];
-
-    participants.forEach(
-        player => {
-
-            if(player){
-
-                player.played++;
-
-            }
-
-        }
-    );
-
-    addPartner(
-        teamA[0],
-        teamA[1]
-    );
-
-    addPartner(
-        teamB[0],
-        teamB[1]
-    );
-
-    teamA.forEach(a=>{
-
-        teamB.forEach(b=>{
-
-            addOpponent(
-                a,
-                b
-            );
-
-        });
-
-    });
-
-    updateRestCount();
-
-}
-
-/* =====================================================
-   Rest Count
-   ===================================================== */
-
-function updateRestCount(){
-
-    const maxPlayed =
-
-        Math.max(
-
-            ...players.map(
-                player =>
-                player.played
+            Math.max(
+                ...groups
             )
-
-        );
-
-    players.forEach(player => {
-
-        player.rested =
-
-            maxPlayed
 
             -
 
-            player.played;
+            Math.min(
+                ...groups
+            );
 
-    });
+        if(
+            options.levelStrict
+        ){
+
+            return diff * 2000;
+
+        }
+
+        return diff * 500;
+
+    }
+
+    return 0;
 
 }
 
 /* =====================================================
-   Utility
+   Build Match
    ===================================================== */
 
-function findPlayer(name){
-
-    return players.find(
-        player =>
-        player.name === name
-    );
-
-}
-
-function addPartner(
-    playerA,
-    playerB
+function buildMatch(
+    group
 ){
 
-    const a =
-        findPlayer(playerA);
+    return {
 
-    const b =
-        findPlayer(playerB);
+        id:
+            matchId++,
 
-    if(!a || !b){
-        return;
-    }
+        round:
+            currentRound,
 
-    if(
-        !a.partners[playerB]
-    ){
+        status:
+            "waiting",
 
-        a.partners[playerB] = 0;
+        teamA:[
+            group[0].name,
+            group[1].name
+        ],
 
-    }
+        teamB:[
+            group[2].name,
+            group[3].name
+        ]
 
-    if(
-        !b.partners[playerA]
-    ){
-
-        b.partners[playerA] = 0;
-
-    }
-
-    a.partners[playerB]++;
-
-    b.partners[playerA]++;
-
-}
-
-function addOpponent(
-    playerA,
-    playerB
-){
-
-    const a =
-        findPlayer(playerA);
-
-    const b =
-        findPlayer(playerB);
-
-    if(!a || !b){
-        return;
-    }
-
-    if(
-        !a.opponents[playerB]
-    ){
-
-        a.opponents[playerB] = 0;
-
-    }
-
-    if(
-        !b.opponents[playerA]
-    ){
-
-        b.opponents[playerA] = 0;
-
-    }
-
-    a.opponents[playerB]++;
-
-    b.opponents[playerA]++;
+    };
 
 }
 
 /* =====================================================
-   Initial Court Assignment
+   Court Initialize
    ===================================================== */
 
 function initializeCourts(){
@@ -1808,8 +2279,7 @@ function initializeCourts(){
 
         activeCourts.push({
 
-            courtNo:
-                i + 1,
+            courtNo:i+1,
 
             match:
                 waitingMatches.shift()
@@ -1820,15 +2290,146 @@ function initializeCourts(){
 
 }
 /* =====================================================
-   Part 5
-   Match Progress Management
+   Badminton Doubles Manager v6
+   Complete Edition
+   Part 5 / 5
+   Match Progress / Render / Export
    ===================================================== */
 
 /* =====================================================
-   Finish Match
+   Statistics Update
    ===================================================== */
 
-async function finishMatch(courtIndex){
+function updateMatchStatistics(match){
+
+    const playersInMatch = [
+
+        ...match.teamA,
+
+        ...match.teamB
+
+    ];
+
+    players.forEach(player => {
+
+        if(
+            playersInMatch.includes(
+                player.name
+            )
+        ){
+
+            player.played++;
+
+            player.lastMatchRound =
+                currentRound;
+
+        }
+
+    });
+
+    addPartner(
+        match.teamA[0],
+        match.teamA[1]
+    );
+
+    addPartner(
+        match.teamB[0],
+        match.teamB[1]
+    );
+
+    match.teamA.forEach(a => {
+
+        match.teamB.forEach(b => {
+
+            addOpponent(a,b);
+
+        });
+
+    });
+
+    updateRestCount();
+
+}
+
+function updateRestCount(){
+
+    const maxPlayed =
+
+        Math.max(
+            ...players.map(
+                p => p.played
+            )
+        );
+
+    players.forEach(player => {
+
+        player.rested =
+
+            maxPlayed
+            -
+            player.played;
+
+    });
+
+}
+
+function addPartner(a,b){
+
+    const p1 =
+        findPlayer(a);
+
+    const p2 =
+        findPlayer(b);
+
+    if(
+        !p1 ||
+        !p2
+    ){
+        return;
+    }
+
+    p1.partners[b] =
+        (p1.partners[b] || 0)
+        + 1;
+
+    p2.partners[a] =
+        (p2.partners[a] || 0)
+        + 1;
+
+}
+
+function addOpponent(a,b){
+
+    const p1 =
+        findPlayer(a);
+
+    const p2 =
+        findPlayer(b);
+
+    if(
+        !p1 ||
+        !p2
+    ){
+        return;
+    }
+
+    p1.opponents[b] =
+        (p1.opponents[b] || 0)
+        + 1;
+
+    p2.opponents[a] =
+        (p2.opponents[a] || 0)
+        + 1;
+
+}
+
+/* =====================================================
+   Match Finish
+   ===================================================== */
+
+async function finishMatch(
+    courtIndex
+){
 
     const court =
         activeCourts[courtIndex];
@@ -1839,6 +2440,12 @@ async function finishMatch(courtIndex){
     ){
         return;
     }
+
+    currentRound++;
+
+    updateMatchStatistics(
+        court.match
+    );
 
     finishedMatches.push(
         court.match
@@ -1855,16 +2462,17 @@ async function finishMatch(courtIndex){
             courtIndex
         );
 
-    }else{
+    }
+    else{
 
-        const finishedAll =
+        const allFinished =
 
             activeCourts.every(
                 court =>
                 !court.match
             );
 
-        if(finishedAll){
+        if(allFinished){
 
             assignBulkMatches();
 
@@ -1881,7 +2489,32 @@ async function finishMatch(courtIndex){
 }
 
 /* =====================================================
-   Single Progress Mode
+   Busy Players
+   ===================================================== */
+
+function getBusyPlayers(){
+
+    const busy = [];
+
+    activeCourts.forEach(court => {
+
+        if(!court.match){
+            return;
+        }
+
+        busy.push(
+            ...court.match.teamA,
+            ...court.match.teamB
+        );
+
+    });
+
+    return busy;
+
+}
+
+/* =====================================================
+   Single Progress
    ===================================================== */
 
 function assignSingleMatch(
@@ -1894,16 +2527,14 @@ function assignSingleMatch(
         return;
     }
 
-    activeCourts[
-        courtIndex
-    ].match =
-
+    activeCourts[courtIndex]
+        .match =
         waitingMatches.shift();
 
 }
 
 /* =====================================================
-   Bulk Progress Mode
+   Bulk Progress
    ===================================================== */
 
 function assignBulkMatches(){
@@ -1926,14 +2557,15 @@ function assignBulkMatches(){
 }
 
 /* =====================================================
-   Reset Schedule
+   Reset
    ===================================================== */
 
 async function resetAll(){
 
     const result =
+
         await showConfirm(
-            "生成済みの対戦表をリセットしますか？"
+            "対戦表をリセットしますか？"
         );
 
     if(!result){
@@ -1945,6 +2577,8 @@ async function resetAll(){
     activeCourts = [];
 
     finishedMatches = [];
+
+    currentRound = 0;
 
     matchId = 1;
 
@@ -1958,13 +2592,10 @@ async function resetAll(){
 
 }
 
-/* =====================================================
-   Regenerate Schedule
-   ===================================================== */
-
 async function regenerateSchedule(){
 
     const result =
+
         await showConfirm(
             "対戦表を再生成しますか？"
         );
@@ -1972,16 +2603,6 @@ async function regenerateSchedule(){
     if(!result){
         return;
     }
-
-    waitingMatches = [];
-
-    activeCourts = [];
-
-    finishedMatches = [];
-
-    matchId = 1;
-
-    resetPlayerStats();
 
     generateSchedule();
 
@@ -1993,22 +2614,30 @@ async function regenerateSchedule(){
 
 function renderRemainingCount(){
 
-    const element =
+    const target =
+
         document.getElementById(
             "remainingCount"
         );
 
-    if(!element){
+    if(!target){
         return;
     }
 
-    element.textContent =
-        waitingMatches.length;
+    target.textContent =
+
+        waitingMatches.length
+
+        +
+
+        activeCourts.filter(
+            c => c.match
+        ).length;
 
 }
 
 /* =====================================================
-   Main Render
+   Render
    ===================================================== */
 
 function renderAll(){
@@ -2023,13 +2652,10 @@ function renderAll(){
 
 }
 
-/* =====================================================
-   Render Courts
-   ===================================================== */
-
 function renderCourts(){
 
     const area =
+
         document.getElementById(
             "courtArea"
         );
@@ -2041,11 +2667,7 @@ function renderCourts(){
     area.innerHTML = "";
 
     activeCourts.forEach(
-
-        (
-            court,
-            index
-        ) => {
+        (court,index) => {
 
             const div =
                 document.createElement(
@@ -2055,91 +2677,67 @@ function renderCourts(){
             div.className =
                 "court-card";
 
-            if(
-                !court.match
-            ){
+            if(!court.match){
 
                 div.innerHTML = `
-
                     <div class="court-title">
-
                         コート ${court.courtNo}
-
                     </div>
-
                     <div>
-
                         空きコート
-
                     </div>
-
                 `;
 
-                area.appendChild(
-                    div
-                );
+                area.appendChild(div);
 
                 return;
 
             }
 
             div.innerHTML = `
-
                 <div class="court-title">
-
                     コート ${court.courtNo}
-
                 </div>
 
                 <div class="court-line">
 
                     <span>
-
                         ${court.match.teamA.join("/")}
-
-                    </span>
-
-                    <span class="vs-inline">
-
-                        VS
-
                     </span>
 
                     <span>
+                        VS
+                    </span>
 
+                    <span>
                         ${court.match.teamB.join("/")}
-
                     </span>
 
                     <button
                         class="finish-btn-small"
-                        onclick="finishMatch(${index})">
-
+                        onclick="
+                        finishMatch(
+                            ${index}
+                        )
+                        "
+                    >
                         終了
-
                     </button>
 
                 </div>
-
             `;
 
-            area.appendChild(
-                div
-            );
+            area.appendChild(div);
 
         }
-
     );
 
 }
 
-/* =====================================================
-   Render Waiting Matches
-   ===================================================== */
-
 function renderWaitingMatches(){
 
     const area =
+
         document.getElementById(
             "waitingArea"
         );
@@ -2162,37 +2760,23 @@ function renderWaitingMatches(){
                 "match-card waiting-match";
 
             div.innerHTML = `
-
                 <div class="match-number">
-
                     試合 ${match.id}
-
                 </div>
 
                 <div>
-
                     ${match.teamA.join("/")}
-
                     VS
-
                     ${match.teamB.join("/")}
-
                 </div>
-
             `;
 
-            area.appendChild(
-                div
-            );
+            area.appendChild(div);
 
         }
     );
 
 }
-
-/* =====================================================
-   Render Finished Matches
-   ===================================================== */
 
 function renderFinishedMatches(){
 
@@ -2220,7 +2804,9 @@ function renderFinishedMatches(){
     }
 
     [...finishedMatches]
+
         .reverse()
+
         .forEach(match => {
 
             const div =
@@ -2232,39 +2818,25 @@ function renderFinishedMatches(){
                 "match-card finished-match";
 
             div.innerHTML = `
-
                 <div class="match-number">
-
                     試合 ${match.id}
-
                 </div>
 
                 <div>
-
                     ${match.teamA.join("/")}
-
                     VS
-
                     ${match.teamB.join("/")}
-
                 </div>
-
             `;
 
-            area.appendChild(
-                div
-            );
+            area.appendChild(div);
 
         });
 
 }
-/* =====================================================
-   Part 6
-   Statistics / Export
-   ===================================================== */
 
 /* =====================================================
-   Render Statistics
+   Statistics
    ===================================================== */
 
 function renderStats(){
@@ -2280,140 +2852,39 @@ function renderStats(){
 
     area.innerHTML = "";
 
-    const sortedPlayers =
+    players.forEach(player => {
 
-        [...players]
-
-        .sort(
-            (a,b)=>
-            b.played -
-            a.played
-        );
-
-    sortedPlayers.forEach(
-
-        (
-            player,
-            index
-        ) => {
-
-            let rank = "";
-
-            if(index===0){
-                rank = "🥇";
-            }
-            else if(index===1){
-                rank = "🥈";
-            }
-            else if(index===2){
-                rank = "🥉";
-            }
-
-            const partnerHistory =
-
-                Object.entries(
-                    player.partners
-                )
-                .map(
-                    ([name,count]) =>
-                    `${name}:${count}`
-                )
-                .join(" / ");
-
-            const opponentHistory =
-
-                Object.entries(
-                    player.opponents
-                )
-                .map(
-                    ([name,count]) =>
-                    `${name}:${count}`
-                )
-                .join(" / ");
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-            card.className =
-                "stat-card";
-
-            card.innerHTML = `
-
-                <div class="stat-name">
-
-                    ${rank}
-                    ${player.name}
-
-                </div>
-
-                <div class="stat-row">
-
-                    <span>
-
-                        出場 :
-                        ${player.played}
-
-                    </span>
-
-                    <span>
-
-                        休憩 :
-                        ${player.rested}
-
-                    </span>
-
-                </div>
-
-                <div class="stat-row">
-
-                    <strong>
-
-                        ペア履歴
-
-                    </strong>
-
-                </div>
-
-                <div>
-
-                    ${
-                        partnerHistory ||
-                        "なし"
-                    }
-
-                </div>
-
-                <div
-                    class="stat-row">
-
-                    <strong>
-
-                        対戦履歴
-
-                    </strong>
-
-                </div>
-
-                <div>
-
-                    ${
-                        opponentHistory ||
-                        "なし"
-                    }
-
-                </div>
-
-            `;
-
-            area.appendChild(
-                card
+        const div =
+            document.createElement(
+                "div"
             );
 
-        }
+        div.className =
+            "stat-card";
 
-    );
+        div.innerHTML = `
+
+            <div class="stat-name">
+                ${player.name}
+            </div>
+
+            <div class="stat-row">
+                <span>
+                    出場:
+                    ${player.played}
+                </span>
+
+                <span>
+                    休憩:
+                    ${player.rested}
+                </span>
+            </div>
+
+        `;
+
+        area.appendChild(div);
+
+    });
 
 }
 
@@ -2424,7 +2895,6 @@ function renderStats(){
 function exportCsv(){
 
     let csv =
-
         "試合No,チームA,チームB\n";
 
     finishedMatches.forEach(
@@ -2432,7 +2902,9 @@ function exportCsv(){
 
             csv +=
 
-                `${match.id},"${match.teamA.join("/")}",` +
+                `${match.id},"${match.teamA.join("/")}",`
+
+                +
 
                 `"${match.teamB.join("/")}"\n`;
 
@@ -2442,18 +2914,14 @@ function exportCsv(){
     const blob =
 
         new Blob(
-
             [csv],
-
             {
                 type:
                 "text/csv;charset=utf-8"
             }
-
         );
 
     const url =
-
         URL.createObjectURL(
             blob
         );
@@ -2485,24 +2953,13 @@ function exportCsv(){
 }
 
 /* =====================================================
-   Global Functions
-   ===================================================== */
-
-window.togglePlayer =
-    togglePlayer;
-
-window.deletePlayer =
-    deletePlayer;
-
-window.finishMatch =
-    finishMatch;
-
-/* =====================================================
-   Auto Save on Change
+   Auto Save
    ===================================================== */
 
 window.addEventListener(
+
     "change",
+
     () => {
 
         if(
@@ -2514,40 +2971,17 @@ window.addEventListener(
         }
 
     }
+
 );
 
 /* =====================================================
-   Final Refresh
+   Global Access
    ===================================================== */
 
-function refreshUI(){
-
-    renderPlayers();
-
-    renderAll();
-
-    renderStats();
-
-}
+window.finishMatch =
+    finishMatch;
 
 /* =====================================================
-   Safety
-   ===================================================== */
-
-if(
-
-    typeof structuredClone
-    === "undefined"
-
-){
-
-    console.log(
-        "structuredClone not supported"
-    );
-
-}
-
-/* =====================================================
-   End Of File
+   End
    ===================================================== */
    

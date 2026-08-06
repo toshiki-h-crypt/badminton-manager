@@ -3,27 +3,27 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
 
-    <title>
-        バドミントンダブルス管理
-    </title>
+<title>
+    バドミントンダブルス管理 v6
+</title>
 
-    <meta
-        name="theme-color"
-        content="#22c55e">
+<meta
+    name="theme-color"
+    content="#22c55e">
 
-    <link
-        rel="manifest"
-        href="manifest.json">
+<link
+    rel="manifest"
+    href="manifest.json">
 
-    <link
-        rel="stylesheet"
-        href="style.css">
+<link
+    rel="stylesheet"
+    href="style.css">
 
 </head>
 
@@ -92,9 +92,9 @@
 
 <main>
 
-    <!-- ===================================== -->
-    <!-- 設定 -->
-    <!-- ===================================== -->
+    <!-- ====================================== -->
+    <!-- Settings -->
+    <!-- ====================================== -->
 
     <section id="settingsPage">
 
@@ -114,19 +114,14 @@
                 min="4"
                 placeholder="例：12">
 
-            <button
-                id="autoCreateBtn">
-
+            <button id="autoCreateBtn">
                 番号で登録
-
             </button>
 
             <hr class="separator">
 
             <p class="help-text">
-
-                改行・スペース・カンマ区切りで複数人登録できます
-
+                改行・スペース・カンマ区切りで複数登録可能
             </p>
 
             <textarea
@@ -144,15 +139,16 @@
             <h3>
 
                 参加人数：
+
                 <span id="playerCount">
                     0
                 </span>
+
                 人
 
             </h3>
 
-            <ul id="playerList">
-            </ul>
+            <ul id="playerList"></ul>
 
             <button
                 id="clearPlayersBtn"
@@ -163,6 +159,10 @@
             </button>
 
         </div>
+
+        <!-- ========================== -->
+        <!-- Match Settings -->
+        <!-- ========================== -->
 
         <div class="card">
 
@@ -190,6 +190,8 @@
                 min="1"
                 value="30">
 
+            <!-- 進行方式 -->
+
             <label>
                 試合進行方式
             </label>
@@ -205,6 +207,58 @@
                 </option>
 
             </select>
+
+            <div
+                id="progressWarning"
+                class="warning-message hidden"></div>
+
+            <!-- 男女設定 -->
+
+            <label>
+                男女ペア設定
+            </label>
+
+            <select id="genderMode">
+
+                <option value="none">
+                    指定なし
+                </option>
+
+                <option value="mixed">
+                    ミックス優先
+                </option>
+
+            </select>
+
+            <!-- レベル設定 -->
+
+            <label>
+                試合レベル設定
+            </label>
+
+            <select id="levelMode">
+
+                <option value="random">
+                    ランダム
+                </option>
+
+                <option value="balance">
+                    レベル均等
+                </option>
+
+                <option value="unified">
+                    レベル統一
+                </option>
+
+            </select>
+
+            <div
+                id="levelModeWarning"
+                class="warning-message hidden">
+
+                ミックス優先ではレベル統一は利用できません
+
+            </div>
 
         </div>
 
@@ -230,9 +284,9 @@
 
     </section>
 
-    <!-- ===================================== -->
-    <!-- 試合 -->
-    <!-- ===================================== -->
+    <!-- ====================================== -->
+    <!-- Match Page -->
+    <!-- ====================================== -->
 
     <section
         id="matchPage"
@@ -248,14 +302,14 @@
             <p>
 
                 残試合：
+
                 <span id="remainingCount">
                     0
                 </span>
 
             </p>
 
-            <div id="courtArea">
-            </div>
+            <div id="courtArea"></div>
 
         </div>
 
@@ -265,8 +319,7 @@
                 待機試合
             </h2>
 
-            <div id="waitingArea">
-            </div>
+            <div id="waitingArea"></div>
 
         </div>
 
@@ -275,34 +328,30 @@
             <h2>
 
                 終了試合
+
                 (
+
                 <span id="finishedCount">
                     0
                 </span>
+
                 )
 
             </h2>
 
-            <button
-                id="toggleFinishedBtn">
-
+            <button id="toggleFinishedBtn">
                 ▼ 展開
-
             </button>
 
-            <button
-                id="clearFinishedBtn">
-
+            <button id="clearFinishedBtn">
                 履歴クリア
-
             </button>
 
             <div
                 id="finishedContainer"
                 class="hidden">
 
-                <div id="finishedArea">
-                </div>
+                <div id="finishedArea"></div>
 
             </div>
 
@@ -310,27 +359,21 @@
 
         <div class="card">
 
-            <button
-                id="regenerateBtn">
-
+            <button id="regenerateBtn">
                 対戦表を再設定
-
             </button>
 
-            <button
-                id="csvBtn">
-
+            <button id="csvBtn">
                 CSV出力
-
             </button>
 
         </div>
 
     </section>
 
-    <!-- ===================================== -->
-    <!-- 管理 -->
-    <!-- ===================================== -->
+    <!-- ====================================== -->
+    <!-- Manage -->
+    <!-- ====================================== -->
 
     <section
         id="managePage"
@@ -342,17 +385,13 @@
                 統計
             </h2>
 
-            <button
-                id="showStatsBtn">
-
+            <button id="showStatsBtn">
                 統計を表示 / 非表示
-
             </button>
 
             <div
                 id="statsArea"
-                class="hidden">
-            </div>
+                class="hidden"></div>
 
         </div>
 
@@ -394,11 +433,8 @@
 
             </select>
 
-            <button
-                id="darkModeBtn">
-
+            <button id="darkModeBtn">
                 ダークモード切替
-
             </button>
 
         </div>
@@ -415,9 +451,7 @@
 
 </footer>
 
-<!-- ===================================== -->
-<!-- Custom Modal -->
-<!-- ===================================== -->
+<!-- Modal -->
 
 <div
     id="modalOverlay"
@@ -426,25 +460,17 @@
     <div class="modal">
 
         <div id="modalMessage">
-
-            メッセージ
-
+            message
         </div>
 
         <div class="modal-buttons">
 
-            <button
-                id="modalCancel">
-
+            <button id="modalCancel">
                 キャンセル
-
             </button>
 
-            <button
-                id="modalOk">
-
+            <button id="modalOk">
                 OK
-
             </button>
 
         </div>
@@ -456,5 +482,5 @@
 <script src="app.js"></script>
 
 </body>
-</html>
 
+</html>

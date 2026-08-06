@@ -1,8 +1,6 @@
 /* =====================================================
-   Badminton Doubles Manager
-   style.css
+   Badminton Doubles Manager v6
    Complete Edition
-   Part 1
    ===================================================== */
 
 /* =====================================================
@@ -24,7 +22,6 @@ body{
         "Yu Gothic",
         "Hiragino Sans",
         sans-serif;
-
     background:#f5f7f9;
     color:#333;
     min-height:100vh;
@@ -35,7 +32,7 @@ body{
    ===================================================== */
 
 .hidden{
-    display:none;
+    display:none !important;
 }
 
 /* =====================================================
@@ -46,11 +43,8 @@ header{
     position:sticky;
     top:0;
     z-index:100;
-
     background:#ffffff;
-
     padding:12px;
-
     box-shadow:
         0 2px 8px rgba(0,0,0,.08);
 }
@@ -62,7 +56,7 @@ header{
 }
 
 .logo{
-    font-size:32px;
+    font-size:34px;
 }
 
 header h1{
@@ -70,8 +64,8 @@ header h1{
 }
 
 .subtitle{
-    font-size:12px;
     color:#666;
+    font-size:12px;
 }
 
 /* =====================================================
@@ -79,75 +73,48 @@ header h1{
    ===================================================== */
 
 .install-btn{
-
     width:100%;
-
     margin-top:10px;
-
     border:none;
-
     border-radius:10px;
-
     background:#2563eb;
-
-    color:white;
-
+    color:#fff;
     padding:12px;
-
-    font-size:15px;
-
     font-weight:bold;
 }
 
 /* =====================================================
-   Tab Navigation
+   Tabs
    ===================================================== */
 
 nav{
-
     display:flex;
-
     gap:8px;
-
     margin-top:12px;
 }
 
 .tab{
-
     flex:1;
-
     border:none;
-
     border-radius:10px;
-
     background:#e5e7eb;
-
     padding:12px;
-
-    cursor:pointer;
-
     font-weight:bold;
-
-    transition:.2s;
+    cursor:pointer;
 }
 
 .tab.active{
-
     background:#22c55e;
-
-    color:white;
+    color:#fff;
 }
 
 /* =====================================================
-   Main Layout
+   Main
    ===================================================== */
 
 main{
-
-    max-width:1000px;
-
+    max-width:1100px;
     margin:auto;
-
     padding:12px;
 }
 
@@ -156,49 +123,30 @@ main{
    ===================================================== */
 
 .card{
-
-    background:white;
-
+    background:#fff;
     border-radius:12px;
-
     padding:15px;
-
     margin-bottom:12px;
-
     box-shadow:
         0 2px 6px rgba(0,0,0,.08);
-
-    transition:.2s;
-}
-
-.card:hover{
-
-    box-shadow:
-        0 6px 16px rgba(0,0,0,.12);
 }
 
 .card h2{
-
     margin-bottom:10px;
 }
 
 .card h3{
-
     margin-top:15px;
-
     margin-bottom:10px;
 }
 
 /* =====================================================
-   Sticky Card
+   Sticky
    ===================================================== */
 
 .sticky-card{
-
     position:sticky;
-
     top:110px;
-
     z-index:50;
 }
 
@@ -207,11 +155,8 @@ main{
    ===================================================== */
 
 .separator{
-
     border:none;
-
     border-top:1px solid #ddd;
-
     margin:15px 0;
 }
 
@@ -220,56 +165,45 @@ main{
    ===================================================== */
 
 .help-text{
-
-    color:#666;
-
     font-size:13px;
-
+    color:#666;
     margin-bottom:10px;
 }
 
+.warning-message{
+    color:#dc2626;
+    font-size:13px;
+    font-weight:bold;
+    margin-top:6px;
+}
+
 /* =====================================================
-   Form Elements
+   Forms
    ===================================================== */
 
 label{
-
     display:block;
-
     margin-top:10px;
-
     margin-bottom:6px;
-
     font-weight:bold;
 }
 
 textarea{
-
     width:100%;
-
     min-height:120px;
-
-    border:1px solid #ccc;
-
-    border-radius:10px;
-
     resize:vertical;
-
+    border:1px solid #ccc;
+    border-radius:10px;
     padding:10px;
 }
 
-input[type="text"],
 input[type="number"],
+input[type="text"],
 select{
-
     width:100%;
-
-    padding:10px;
-
     border:1px solid #ccc;
-
     border-radius:10px;
-
+    padding:10px;
     margin-bottom:10px;
 }
 
@@ -278,73 +212,46 @@ select{
    ===================================================== */
 
 button{
-
     cursor:pointer;
-
-    font-size:14px;
 }
 
 .primary{
-
     background:#16a34a;
-
     color:white;
-
     border:none;
 }
 
 .danger{
-
     background:#dc2626;
-
     color:white;
-
     border:none;
 }
 
 .big-btn{
-
     width:100%;
-
     padding:14px;
-
     border-radius:10px;
-
     margin-bottom:10px;
 }
 
 #addPlayerBtn,
 #autoCreateBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#16a34a;
-
     color:white;
-
     padding:12px;
-
     margin-top:10px;
 }
 
 #clearPlayersBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#dc2626;
-
     color:white;
-
     padding:12px;
-
     margin-top:12px;
 }
 
@@ -357,100 +264,60 @@ button{
 }
 
 #regenerateBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#f59e0b;
-
     color:white;
-
     padding:12px;
-
     margin-bottom:10px;
 }
 
 #csvBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#2563eb;
-
     color:white;
-
     padding:12px;
 }
 
 #showStatsBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#16a34a;
-
     color:white;
-
     padding:12px;
-
     margin-bottom:10px;
 }
 
 #darkModeBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#374151;
-
     color:white;
-
     padding:12px;
 }
 
 #toggleFinishedBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#64748b;
-
     color:white;
-
     padding:10px;
-
     margin-bottom:10px;
 }
 
 #clearFinishedBtn{
-
     width:100%;
-
     border:none;
-
     border-radius:10px;
-
     background:#dc2626;
-
     color:white;
-
     padding:10px;
-
     margin-bottom:10px;
 }
 
@@ -459,173 +326,142 @@ button{
    ===================================================== */
 
 #playerList{
-
     list-style:none;
-
-    max-height:420px;
-
-    overflow-y:auto;
-
     border:1px solid #ddd;
-
     border-radius:10px;
-
     margin-top:10px;
+    max-height:500px;
+    overflow-y:auto;
 }
 
 #playerList li{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    gap:10px;
-
     padding:10px;
-
     border-bottom:1px solid #eee;
 }
 
+.player-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.player-name{
+    min-width:80px;
+    font-weight:bold;
+}
+
+.gender-select{
+    width:65px;
+    min-width:65px;
+    margin:0;
+    padding:6px;
+}
+
 .delete-btn{
-
     border:none;
-
     background:none;
-
     color:#dc2626;
-
     font-size:18px;
 }
+
 /* =====================================================
-   Match Area
+   Level Stars
+   ===================================================== */
+
+.star-area{
+    display:flex;
+    gap:2px;
+}
+
+.star{
+    color:#d1d5db;
+    font-size:20px;
+    cursor:pointer;
+    user-select:none;
+    transition:.15s;
+}
+
+.star.active{
+    color:#f59e0b;
+}
+
+.star:hover{
+    transform:scale(1.15);
+}
+
+/* =====================================================
+   Court Area
    ===================================================== */
 
 #courtArea,
 #waitingArea,
 #finishedArea{
-
     display:flex;
-
     flex-direction:column;
-
     gap:10px;
-
 }
 
-/* =====================================================
-   Court Card
-   ===================================================== */
-
 .court-card{
-
     background:#ecfdf5;
-
     border:2px solid #22c55e;
-
     border-radius:12px;
-
     padding:10px;
-
 }
 
 .court-title{
-
     font-weight:bold;
-
     margin-bottom:8px;
-
 }
 
 .court-line{
-
     display:flex;
-
-    align-items:center;
-
     justify-content:space-between;
-
-    gap:10px;
-
+    align-items:center;
     flex-wrap:wrap;
-
-}
-
-.vs-inline{
-
-    font-weight:bold;
-
-    color:#666;
-
+    gap:10px;
 }
 
 .finish-btn-small{
-
     border:none;
-
     border-radius:8px;
-
     background:#2563eb;
-
-    color:white;
-
+    color:#fff;
     padding:6px 12px;
-
-    font-size:13px;
-
 }
 
 /* =====================================================
-   Match Card
+   Match Cards
    ===================================================== */
 
 .match-card{
-
     border:1px solid #ddd;
-
     border-radius:10px;
-
     padding:10px;
-
 }
 
 .match-number{
-
     font-weight:bold;
-
-    margin-bottom:6px;
-
+    margin-bottom:5px;
 }
 
 .waiting-match{
-
-    background:#ffffff;
-
+    background:#fff;
 }
 
 .finished-match{
-
     background:#f3f4f6;
-
-    opacity:.9;
-
 }
 
 /* =====================================================
-   Finished Matches
+   Finished
    ===================================================== */
 
 #finishedContainer{
-
     max-height:40vh;
-
     overflow-y:auto;
-
     border-top:1px solid #ddd;
-
     padding-top:10px;
-
 }
 
 /* =====================================================
@@ -633,31 +469,20 @@ button{
    ===================================================== */
 
 .stat-card{
-
     border-bottom:1px solid #eee;
-
     padding:12px 0;
-
 }
 
 .stat-name{
-
     font-size:16px;
-
     font-weight:bold;
-
 }
 
 .stat-row{
-
     display:flex;
-
     flex-wrap:wrap;
-
     gap:12px;
-
     margin-top:6px;
-
 }
 
 /* =====================================================
@@ -665,106 +490,48 @@ button{
    ===================================================== */
 
 .modal-overlay{
-
     position:fixed;
-
     inset:0;
-
     background:rgba(0,0,0,.45);
-
     display:flex;
-
-    align-items:center;
-
     justify-content:center;
-
+    align-items:center;
     z-index:1000;
-
 }
 
 .modal{
-
     width:90%;
-
     max-width:340px;
-
-    background:#ffffff;
-
+    background:white;
     border-radius:12px;
-
     padding:20px;
-
-    box-shadow:
-        0 10px 24px rgba(0,0,0,.2);
-
 }
 
 #modalMessage{
-
-    font-size:15px;
-
     line-height:1.6;
-
 }
 
 .modal-buttons{
-
     display:flex;
-
     justify-content:flex-end;
-
     gap:10px;
-
     margin-top:20px;
-
 }
 
 #modalCancel{
-
     border:none;
-
     border-radius:8px;
-
     background:#9ca3af;
-
     color:white;
-
     padding:10px 14px;
-
 }
 
 #modalOk{
-
     border:none;
-
     border-radius:8px;
-
     background:#2563eb;
-
     color:white;
-
     padding:10px 14px;
-
-}
-
-/* =====================================================
-   Scroll Bar
-   ===================================================== */
-
-#playerList::-webkit-scrollbar,
-#finishedContainer::-webkit-scrollbar{
-
-    width:8px;
-
-}
-
-#playerList::-webkit-scrollbar-thumb,
-#finishedContainer::-webkit-scrollbar-thumb{
-
-    background:#cbd5e1;
-
-    border-radius:999px;
-
 }
 
 /* =====================================================
@@ -772,39 +539,32 @@ button{
    ===================================================== */
 
 footer{
-
     text-align:center;
-
     padding:20px;
-
     color:#888;
-
-    font-size:12px;
-
 }
 
 /* =====================================================
    Responsive
    ===================================================== */
 
-@media (min-width:768px){
+@media (max-width:640px){
 
-    main{
-
-        padding:20px;
-
+    .player-row{
+        gap:6px;
     }
 
-    .card{
-
-        padding:20px;
-
+    .player-name{
+        min-width:60px;
     }
 
-    header h1{
+    .gender-select{
+        width:60px;
+        min-width:60px;
+    }
 
-        font-size:24px;
-
+    .star{
+        font-size:18px;
     }
 
 }
@@ -814,112 +574,66 @@ footer{
    ===================================================== */
 
 .dark-mode{
-
     background:#111827;
-
     color:#f3f4f6;
-
 }
 
 .dark-mode header{
-
     background:#1f2937;
-
 }
 
 .dark-mode .card{
-
     background:#1f2937;
-
     color:#f3f4f6;
-
 }
 
 .dark-mode textarea,
 .dark-mode input,
 .dark-mode select{
-
     background:#374151;
-
     color:white;
-
-    border:1px solid #4b5563;
-
+    border-color:#4b5563;
 }
 
 .dark-mode .tab{
-
     background:#374151;
-
     color:white;
-
 }
 
 .dark-mode .tab.active{
-
     background:#22c55e;
-
 }
 
 .dark-mode .court-card{
-
     background:#064e3b;
-
-    border-color:#22c55e;
-
 }
 
 .dark-mode .match-card{
-
     background:#374151;
-
     border-color:#4b5563;
-
 }
 
 .dark-mode #playerList{
-
     border-color:#4b5563;
-
 }
 
 .dark-mode #playerList li{
-
     border-color:#4b5563;
-
-}
-
-.dark-mode #finishedContainer{
-
-    border-color:#4b5563;
-
 }
 
 .dark-mode .modal{
-
     background:#1f2937;
-
-    color:#ffffff;
-
+    color:white;
 }
 
-.dark-mode #modalCancel{
-
-    background:#6b7280;
-
+.dark-mode .warning-message{
+    color:#f87171;
 }
 
-.dark-mode #modalOk{
-
-    background:#2563eb;
-
+.dark-mode .star{
+    color:#6b7280;
 }
 
-.dark-mode footer{
-
-    color:#cbd5e1;
-
-}
-.hidden{
-    display:none !important;
+.dark-mode .star.active{
+    color:#fbbf24;
 }

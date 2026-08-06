@@ -12,7 +12,9 @@ const CACHE_FILES = [
     "./index.html",
     "./style.css",
     "./app.js",
-    "./manifest.json"
+    "./manifest.json",
+    "./icons/icon-192.png",
+    "./icons/icon-512.png"
 
 ];
 
