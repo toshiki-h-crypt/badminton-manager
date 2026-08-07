@@ -2825,49 +2825,110 @@ function assignSingleMatch(
     const busyPlayers =
         getBusyPlayers();
 
-    const blockedPlayers = [
+    const strictCandidates =
 
-        ...busyPlayers,
-
-        ...recentlyPlayedPlayers
-
-    ];
-
-    let candidateIndex =
-
-        waitingMatches.findIndex(
+        waitingMatches.filter(
             match => {
 
                 const players = [
 
                     ...match.teamA,
-
                     ...match.teamB
 
                 ];
 
                 return !players.some(
                     player =>
-                    blockedPlayers.includes(
+
+                    busyPlayers.includes(
                         player
                     )
+
                 );
 
             }
         );
 
-    if(candidateIndex === -1){
+    if(
+        strictCandidates.length === 0
+    ){
 
-        candidateIndex = 0;
+        activeCourts[
+            courtIndex
+        ].match = null;
+
+        return;
 
     }
+
+    let selectedMatch =
+
+        strictCandidates[0];
+
+    let bestScore =
+        Number.MAX_SAFE_INTEGER;
+
+    strictCandidates.forEach(
+        match => {
+
+            const players = [
+
+                ...match.teamA,
+                ...match.teamB
+
+            ];
+
+            let score = 0;
+
+            players.forEach(
+                player => {
+
+                    if(
+
+                        recentlyPlayedPlayers.includes(
+                            player
+                        )
+
+                    ){
+
+                        score += 1000;
+
+                    }
+
+                }
+            );
+
+            if(
+                score <
+                bestScore
+            ){
+
+                bestScore =
+                    score;
+
+                selectedMatch =
+                    match;
+
+            }
+
+        }
+    );
+
+    const index =
+
+        waitingMatches.findIndex(
+            match =>
+
+            match.id ===
+            selectedMatch.id
+        );
 
     activeCourts[
         courtIndex
     ].match =
 
         waitingMatches.splice(
-            candidateIndex,
+            index,
             1
         )[0];
 
@@ -2879,68 +2940,118 @@ function assignSingleMatch(
 
 function assignBulkMatches(){
 
-    const blockedPlayers =
-
-        [...recentlyPlayedPlayers];
+    const alreadyAssignedPlayers =
+        [];
 
     activeCourts.forEach(
         court => {
 
-            if(
-                waitingMatches.length === 0
-            ){
-                return;
-            }
+            court.match = null;
 
-            const index =
+        }
+    );
 
-                waitingMatches.findIndex(
-                    match => {
+    activeCourts.forEach(
+        court => {
 
-                        const players = [
+            let selectedIndex =
+                -1;
 
-                            ...match.teamA,
+            let bestScore =
+                Number.MAX_SAFE_INTEGER;
 
-                            ...match.teamB
+            waitingMatches.forEach(
+                (match,index) => {
 
-                        ];
+                    const players = [
 
-                        return !players.some(
+                        ...match.teamA,
+                        ...match.teamB
+
+                    ];
+
+                    /*
+                      他コートとの
+                      重複禁止
+                    */
+
+                    const overlap =
+
+                        players.some(
                             player =>
 
-                            blockedPlayers.includes(
+                            alreadyAssignedPlayers
+                            .includes(
                                 player
                             )
 
                         );
 
+                    if(
+                        overlap
+                    ){
+                        return;
                     }
-                );
 
-            if(index >= 0){
+                    let score = 0;
 
-                const match =
+                    players.forEach(
+                        player => {
 
-                    waitingMatches.splice(
-                        index,
-                        1
-                    )[0];
+                            if(
 
-                court.match =
-                    match;
+                                recentlyPlayedPlayers.includes(
+                                    player
+                                )
 
-                blockedPlayers.push(
-                    ...match.teamA,
-                    ...match.teamB
-                );
+                            ){
 
+                                score += 1000;
+
+                            }
+
+                        }
+                    );
+
+                    if(
+                        score <
+                        bestScore
+                    ){
+
+                        bestScore =
+                            score;
+
+                        selectedIndex =
+                            index;
+
+                    }
+
+                }
+            );
+
+            if(
+                selectedIndex === -1
+            ){
+                return;
             }
-            else{
 
-                court.match =
-                    waitingMatches.shift();
+            const match =
 
-            }
+                waitingMatches.splice(
+                    selectedIndex,
+                    1
+                )[0];
+
+            court.match =
+                match;
+
+            alreadyAssignedPlayers.push(
+
+                ...match.teamA,
+
+                ...match.teamB
+
+            );
 
         }
     );
