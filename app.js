@@ -35,6 +35,8 @@ let recentlyPlayedPlayers = [];
 
 let previousRoundPlayers = [];
 
+let courtBuffers = [];
+
 /* =====================================================
    Settings
    ===================================================== */
@@ -1912,6 +1914,8 @@ async function generateSchedule(){
 
     }
 
+    courtBuffers = [];
+    
     initializeCourts();
 
     saveData();
@@ -2626,6 +2630,8 @@ function initializeCourts(){
 
     activeCourts = [];
 
+    courtBuffers = [];
+
     for(
         let i = 0;
         i < settings.courtCount;
@@ -2642,52 +2648,39 @@ function initializeCourts(){
 
     }
 
-    const usedPlayers =
-        new Set();
-
     activeCourts.forEach(
-        court => {
+        (court,index) => {
 
-            const index =
+            const blockedPlayers =
+                getPlayingPlayers();
 
-                waitingMatches.findIndex(
-                    match =>
-
-                    !overlapsPlayers(
-                        match,
-                        usedPlayers
-                    )
-
+            const match =
+                createBestMatch(
+                    blockedPlayers
                 );
 
-            if(
-                index === -1
-            ){
+            if(!match){
                 return;
             }
 
-            const match =
+            court.match = match;
 
-                waitingMatches.splice(
-                    index,
-                    1
-                )[0];
+            courtBuffers[index] = {
 
-            court.match =
-                match;
+                courtNo :
+                    court.courtNo,
 
-            [
+                players : [
 
-                ...match.teamA,
-                ...match.teamB
+                    ...match.teamA,
 
-            ].forEach(
-                player =>
+                    ...match.teamB
 
-                usedPlayers.add(
-                    player
-                )
-            );
+                ],
+
+                status : "playing"
+
+            };
 
         }
     );
@@ -2828,6 +2821,22 @@ function addOpponent(a,b){
 
 }
 
+function getPlayingPlayers(){
+
+    return courtBuffers
+
+        .filter(
+            buffer =>
+            buffer.status === "playing"
+        )
+
+        .flatMap(
+            buffer =>
+            buffer.players
+        );
+
+}
+
 /* =====================================================
    Match Finish
    ===================================================== */
@@ -2859,6 +2868,17 @@ async function finishMatch(
     finishedMatches.push(
         court.match
     );
+
+    if(
+        courtBuffers[courtIndex]
+    ){
+
+        courtBuffers[
+            courtIndex
+        ].status =
+            "finished";
+
+    }
 
     court.match = null;
 
@@ -2930,42 +2950,15 @@ function assignSingleMatch(
     courtIndex
 ){
 
-    if(
-        waitingMatches.length === 0
-    ){
-        return;
-    }
+    const blockedPlayers =
+        getPlayingPlayers();
 
-    const busyPlayers =
-        getBusyPlayers();
-
-    const strictCandidates =
-
-        waitingMatches.filter(
-            match => {
-
-                const players = [
-
-                    ...match.teamA,
-                    ...match.teamB
-
-                ];
-
-                return !players.some(
-                    player =>
-
-                    busyPlayers.includes(
-                        player
-                    )
-
-                );
-
-            }
+    const match =
+        createBestMatch(
+            blockedPlayers
         );
 
-    if(
-        strictCandidates.length === 0
-    ){
+    if(!match){
 
         activeCourts[
             courtIndex
@@ -2975,76 +2968,31 @@ function assignSingleMatch(
 
     }
 
-    let selectedMatch =
-
-        strictCandidates[0];
-
-    let bestScore =
-        Number.MAX_SAFE_INTEGER;
-
-    strictCandidates.forEach(
-        match => {
-
-            const players = [
-
-                ...match.teamA,
-                ...match.teamB
-
-            ];
-
-            let score = 0;
-
-            players.forEach(
-                player => {
-
-                    if(
-
-                        recentlyPlayedPlayers.includes(
-                            player
-                        )
-
-                    ){
-
-                        score += 1000;
-
-                    }
-
-                }
-            );
-
-            if(
-                score <
-                bestScore
-            ){
-
-                bestScore =
-                    score;
-
-                selectedMatch =
-                    match;
-
-            }
-
-        }
-    );
-
-    const index =
-
-        waitingMatches.findIndex(
-            match =>
-
-            match.id ===
-            selectedMatch.id
-        );
-
     activeCourts[
         courtIndex
-    ].match =
+    ].match = match;
 
-        waitingMatches.splice(
-            index,
-            1
-        )[0];
+    courtBuffers[
+        courtIndex
+    ] = {
+
+        courtNo :
+            activeCourts[
+                courtIndex
+            ].courtNo,
+
+        players : [
+
+            ...match.teamA,
+
+            ...match.teamB
+
+        ],
+
+        status :
+            "playing"
+
+    };
 
 }
 
@@ -3054,9 +3002,6 @@ function assignSingleMatch(
 
 function assignBulkMatches(){
 
-    const usedPlayers =
-        new Set();
-
     activeCourts.forEach(
         court => {
 
@@ -3065,49 +3010,42 @@ function assignBulkMatches(){
         }
     );
 
+    courtBuffers = [];
+
     activeCourts.forEach(
-        court => {
+        (court,index) => {
 
-            const index =
+            const blockedPlayers =
+                getPlayingPlayers();
 
-                waitingMatches.findIndex(
-                    match =>
-
-                    !overlapsPlayers(
-                        match,
-                        usedPlayers
-                    )
-
+            const match =
+                createBestMatch(
+                    blockedPlayers
                 );
 
-            if(
-                index === -1
-            ){
+            if(!match){
                 return;
             }
 
-            const match =
+            court.match = match;
 
-                waitingMatches.splice(
-                    index,
-                    1
-                )[0];
+            courtBuffers[index] = {
 
-            court.match =
-                match;
+                courtNo :
+                    court.courtNo,
 
-            [
+                players : [
 
-                ...match.teamA,
-                ...match.teamB
+                    ...match.teamA,
 
-            ].forEach(
-                player =>
+                    ...match.teamB
 
-                usedPlayers.add(
-                    player
-                )
-            );
+                ],
+
+                status :
+                    "playing"
+
+            };
 
         }
     );
