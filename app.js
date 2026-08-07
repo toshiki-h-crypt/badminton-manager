@@ -29,6 +29,8 @@ let currentRound = 0;
 
 let deferredPrompt = null;
 
+let simulationRound = 0;
+
 /* =====================================================
    Settings
    ===================================================== */
@@ -126,6 +128,8 @@ function saveData(){
 
             currentRound,
 
+            simulationRound,
+
             settings,
 
             appOptions
@@ -143,6 +147,7 @@ function saveData(){
 function loadData(){
 
     const json =
+
         localStorage.getItem(
             STORAGE_KEY
         );
@@ -154,6 +159,7 @@ function loadData(){
     try{
 
         const data =
+
             JSON.parse(json);
 
         players =
@@ -174,6 +180,9 @@ function loadData(){
         currentRound =
             data.currentRound || 0;
 
+        simulationRound =
+            data.simulationRound || 0;
+
         settings =
             data.settings || settings;
 
@@ -183,7 +192,9 @@ function loadData(){
     }
     catch(error){
 
-        console.error(error);
+        console.error(
+            error
+        );
 
     }
 
@@ -385,6 +396,49 @@ function getLevelGroup(level){
     }
 
     return 3;
+
+}
+
+/* =====================================================
+   Unused Pair Check
+   ===================================================== */
+
+function existsUnusedPair(){
+
+    const activePlayers =
+        getActivePlayers();
+
+    for(let i=0;i<activePlayers.length;i++){
+
+        for(
+            let j=i+1;
+            j<activePlayers.length;
+            j++
+        ){
+
+            const p1 =
+                activePlayers[i];
+
+            const p2 =
+                activePlayers[j];
+
+            const count =
+
+                p1.partners[
+                    p2.name
+                ] || 0;
+
+            if(count === 0){
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+    return false;
 
 }
 
@@ -1173,7 +1227,6 @@ function createPlayer(
     return {
 
         id:
-
             id ||
             (
                 Date.now()
@@ -1192,6 +1245,10 @@ function createPlayer(
         played:0,
 
         rested:0,
+
+        simPlayed:0,
+
+        simRested:0,
 
         lastMatchRound:-999,
 
@@ -1389,6 +1446,8 @@ async function clearPlayers(){
     finishedMatches = [];
 
     currentRound = 0;
+
+    simulationRound = 0;
 
     matchId = 1;
 
@@ -1676,6 +1735,10 @@ function resetPlayerStats(){
 
         player.rested = 0;
 
+        player.simPlayed = 0;
+
+        player.simRested = 0;
+
         player.lastMatchRound = -999;
 
         player.partners = {};
@@ -1739,6 +1802,8 @@ async function generateSchedule(){
 
     currentRound = 0;
 
+    simulationRound = 0;
+
     matchId = 1;
 
     resetPlayerStats();
@@ -1752,13 +1817,38 @@ async function generateSchedule(){
         const match =
             createBestMatch();
 
-        if(match){
+        if(!match){
 
-            waitingMatches.push(
-                match
+            console.warn(
+                "これ以上試合を生成できません"
             );
 
+            break;
+
         }
+
+        /*
+         シミュレーション統計
+         （対戦生成用）
+        */
+
+        simulateMatchStatistics(
+            match
+        );
+
+        simulatePartnerHistory(
+            match
+        );
+
+        simulateOpponentHistory(
+            match
+        );
+
+        simulationRound++;
+
+        waitingMatches.push(
+            match
+        );
 
     }
 
@@ -1775,42 +1865,193 @@ async function generateSchedule(){
     );
 
 }
+function simulateMatchStatistics(match){
+
+    const names = [
+
+        ...match.teamA,
+
+        ...match.teamB
+
+    ];
+
+    players.forEach(player => {
+
+        if(
+            names.includes(
+                player.name
+            )
+        ){
+
+            player.simPlayed++;
+
+            player.lastMatchRound =
+                simulationRound;
+
+        }
+
+    });
+
+    const maxPlayed =
+
+        Math.max(
+
+            ...players.map(
+                player =>
+                player.simPlayed
+            )
+
+        );
+
+    players.forEach(player => {
+
+        player.simRested =
+
+            maxPlayed
+
+            -
+
+            player.simPlayed;
+
+    });
+
+}
+
+function simulatePartnerHistory(match){
+
+    const pairs = [
+
+        [match.teamA[0], match.teamA[1]],
+
+        [match.teamB[0], match.teamB[1]]
+
+    ];
+
+    pairs.forEach(pair => {
+
+        const p1 =
+            findPlayer(pair[0]);
+
+        const p2 =
+            findPlayer(pair[1]);
+
+        if(!p1 || !p2){
+            return;
+        }
+
+        p1.partners[p2.name] =
+            (p1.partners[p2.name] || 0)
+            + 1;
+
+        p2.partners[p1.name] =
+            (p2.partners[p1.name] || 0)
+            + 1;
+
+    });
+
+}
+
+function simulateOpponentHistory(match){
+
+    match.teamA.forEach(a => {
+
+        match.teamB.forEach(b => {
+
+            const p1 =
+                findPlayer(a);
+
+            const p2 =
+                findPlayer(b);
+
+            if(!p1 || !p2){
+                return;
+            }
+
+            p1.opponents[b] =
+                (p1.opponents[b] || 0)
+                + 1;
+
+            p2.opponents[a] =
+                (p2.opponents[a] || 0)
+                + 1;
+
+        });
+
+    });
+
+}
 
 /* =====================================================
    Create Match
    ===================================================== */
 
-function createBestMatch(){
+function cloneGroup(group){
 
-    const activePlayers =
-        getActivePlayers();
+    return [
+
+        group[0],
+        group[1],
+        group[2],
+        group[3]
+
+    ];
+
+}
+
+function createBestMatch(
+    excludedPlayers = []
+){
+
+    const candidates =
+
+        getActivePlayers()
+
+        .filter(
+            player =>
+
+            !excludedPlayers.includes(
+                player.name
+            )
+        );
 
     if(
-        activePlayers.length < 4
+        candidates.length < 4
     ){
         return null;
     }
 
-    let bestMatch = null;
+    const unusedPairExists =
+        existsUnusedPair();
 
     let bestScore =
         Number.MAX_SAFE_INTEGER;
 
+    const topGroups = [];
+
     const stages = [
 
         {
-            levelStrict:true,
-            mixedStrict:true
+            strictPair:true,
+            strictLevel:true,
+            strictMixed:true
         },
 
         {
-            levelStrict:false,
-            mixedStrict:true
+            strictPair:true,
+            strictLevel:false,
+            strictMixed:true
         },
 
         {
-            levelStrict:false,
-            mixedStrict:false
+            strictPair:true,
+            strictLevel:false,
+            strictMixed:false
+        },
+
+        {
+            strictPair:false,
+            strictLevel:false,
+            strictMixed:false
         }
 
     ];
@@ -1819,24 +2060,41 @@ function createBestMatch(){
         const stage of stages
     ){
 
+        topGroups.length = 0;
+
+        bestScore =
+            Number.MAX_SAFE_INTEGER;
+
         for(
-            let i=0;
-            i<1000;
+            let i = 0;
+            i < 6000;
             i++
         ){
 
             const group =
+
                 shuffle(
-                    activePlayers
-                ).slice(
+                    candidates
+                )
+
+                .slice(
                     0,
                     4
                 );
 
+            if(
+                unusedPairExists &&
+                !hasNewPair(group)
+            ){
+                continue;
+            }
+
             const score =
-                evaluateGroup(
+
+                evaluateAdvancedGroup(
                     group,
-                    stage
+                    stage,
+                    unusedPairExists
                 );
 
             if(
@@ -1847,25 +2105,54 @@ function createBestMatch(){
                 bestScore =
                     score;
 
-                bestMatch =
-                    buildMatch(
-                        group
-                    );
+                topGroups.length = 0;
+
+                topGroups.push(
+                    cloneGroup(group)
+                );
+
+            }
+            else if(
+                score ===
+                bestScore
+            ){
+
+                topGroups.push(
+                    cloneGroup(group)
+                );
+
+                if(
+                    topGroups.length > 10
+                ){
+
+                    topGroups.shift();
+
+                }
 
             }
 
         }
 
         if(
-            bestMatch &&
-            bestScore < 999999
+            topGroups.length > 0 &&
+            bestScore < 99999999
         ){
-            break;
+
+            const selectedGroup =
+
+                shuffle(
+                    topGroups
+                )[0];
+
+            return buildMatch(
+                selectedGroup
+            );
+
         }
 
     }
 
-    return bestMatch;
+    return null;
 
 }
 
@@ -1873,133 +2160,7 @@ function createBestMatch(){
    Evaluate Group
    ===================================================== */
 
-function evaluateGroup(
-    group,
-    options
-){
-
-    let score = 0;
-
-    score +=
-        appearanceScore(
-            group
-        );
-
-    score +=
-        restScore(
-            group
-        );
-
-    score +=
-        consecutiveScore(
-            group
-        );
-
-    score +=
-        opponentScore(
-            group
-        );
-
-    score +=
-        pairScore(
-            group
-        );
-
-    score +=
-        genderScore(
-            group,
-            options
-        );
-
-    score +=
-        levelScore(
-            group,
-            options
-        );
-
-    return score;
-
-}
-
-/* =====================================================
-   Played Balance
-   ===================================================== */
-
-function appearanceScore(
-    group
-){
-
-    const values =
-        group.map(
-            p=>p.played
-        );
-
-    return (
-        Math.max(...values)
-        -
-        Math.min(...values)
-    ) * 150;
-
-}
-
-/* =====================================================
-   Rest Balance
-   ===================================================== */
-
-function restScore(
-    group
-){
-
-    const values =
-        group.map(
-            p=>p.rested
-        );
-
-    return (
-        Math.max(...values)
-        -
-        Math.min(...values)
-    ) * 80;
-
-}
-
-/* =====================================================
-   Consecutive Penalty
-   ===================================================== */
-
-function consecutiveScore(
-    group
-){
-
-    let score = 0;
-
-    group.forEach(player=>{
-
-        const diff =
-
-            currentRound
-            -
-            player.lastMatchRound;
-
-        if(diff <= 1){
-
-            score += 1000;
-
-        }
-
-    });
-
-    return score;
-
-}
-
-/* =====================================================
-   Pair Restriction
-   ===================================================== */
-
-function pairScore(
-    group
-){
+function hasNewPair(group){
 
     const a = group[0];
     const b = group[1];
@@ -2017,13 +2178,243 @@ function pairScore(
             d.name
         ] || 0;
 
+    return (
+    	pair1 === 0 ||
+    	pair2 === 0
+	);
+
+}
+
+function evaluateAdvancedGroup(
+    group,
+    stage,
+    unusedPairExists
+){
+
+    const a = group[0];
+    const b = group[1];
+    const c = group[2];
+    const d = group[3];
+
     let score = 0;
 
-    score += pair1 * 5000;
+    const pair1 =
+        a.partners[
+            b.name
+        ] || 0;
 
-    score += pair2 * 5000;
+    const pair2 =
+        c.partners[
+            d.name
+        ] || 0;
+
+    if(
+        stage.strictPair &&
+        unusedPairExists
+    ){
+
+        if(pair1 > 0){
+            return 99999999;
+        }
+
+        if(pair2 > 0){
+            return 99999999;
+        }
+
+    }
+
+    score += pair1 * 30000;
+    score += pair2 * 30000;
+
+    score +=
+        appearanceScore(
+            group
+        );
+
+    score +=
+        restScore(
+            group
+        );
+
+    group.forEach(player => {
+
+        const diff =
+
+            simulationRound
+            -
+            player.lastMatchRound;
+
+        if(diff <= 1){
+
+            score += 10000;
+
+        }
+
+    });
+
+    if(
+        settings.genderMode ===
+        "mixed"
+    ){
+
+        const mixed1 =
+
+            a.gender !== "none" &&
+            b.gender !== "none" &&
+            a.gender !== b.gender;
+
+        const mixed2 =
+
+            c.gender !== "none" &&
+            d.gender !== "none" &&
+            c.gender !== d.gender;
+
+        if(stage.strictMixed){
+
+            if(!mixed1){
+                return 99999999;
+            }
+
+            if(!mixed2){
+                return 99999999;
+            }
+
+        }
+
+    }
+
+    if(
+        settings.levelMode ===
+        "balance"
+    ){
+
+        const teamA =
+            a.level + b.level;
+
+        const teamB =
+            c.level + d.level;
+
+        const levelDiff =
+
+            Math.abs(
+                teamA - teamB
+            );
+
+        score +=
+            levelDiff * 4000;
+
+        const intraA =
+
+            Math.abs(
+                a.level - b.level
+            );
+
+        const intraB =
+
+            Math.abs(
+                c.level - d.level
+            );
+
+        score +=
+            (
+                intraA +
+                intraB
+            ) * 500;
+
+    }
+
+    if(
+        settings.levelMode ===
+        "unified"
+    ){
+
+        const groups = [
+
+            getLevelGroup(a.level),
+            getLevelGroup(b.level),
+            getLevelGroup(c.level),
+            getLevelGroup(d.level)
+
+        ];
+
+        const diff =
+
+            Math.max(...groups)
+
+            -
+
+            Math.min(...groups);
+
+        if(
+            stage.strictLevel &&
+            diff > 0
+        ){
+            return 99999999;
+        }
+
+        score +=
+            diff * 5000;
+
+    }
+
+    score +=
+        opponentScore(
+            group
+        );
 
     return score;
+
+}
+
+/* =====================================================
+   Played Balance
+   ===================================================== */
+
+function appearanceScore(
+    group
+){
+
+    const values =
+
+        group.map(
+            p => p.simPlayed
+        );
+
+    const diff =
+
+        Math.max(...values)
+
+        -
+
+        Math.min(...values);
+
+    return diff * 1000;
+
+}
+
+/* =====================================================
+   Rest Balance
+   ===================================================== */
+
+function restScore(
+    group
+){
+
+    const values =
+
+        group.map(
+            p => p.simRested
+        );
+
+    const diff =
+
+        Math.max(...values)
+
+        -
+
+        Math.min(...values);
+
+    return diff * 500;
 
 }
 
@@ -2038,14 +2429,14 @@ function opponentScore(
     let score = 0;
 
     for(
-        let i=0;
-        i<2;
+        let i = 0;
+        i < 2;
         i++
     ){
 
         for(
-            let j=2;
-            j<4;
+            let j = 2;
+            j < 4;
             j++
         ){
 
@@ -2059,168 +2450,13 @@ function opponentScore(
                     || 0
                 )
 
-                * 100;
+                * 800;
 
         }
 
     }
 
     return score;
-
-}
-
-/* =====================================================
-   Mixed Priority
-   ===================================================== */
-
-function genderScore(
-    group,
-    options
-){
-
-    if(
-        settings.genderMode !==
-        "mixed"
-    ){
-        return 0;
-    }
-
-    const a = group[0];
-    const b = group[1];
-
-    const c = group[2];
-    const d = group[3];
-
-    let score = 0;
-
-    const team1Mixed =
-
-        a.gender !== "none" &&
-        b.gender !== "none" &&
-        a.gender !== b.gender;
-
-    const team2Mixed =
-
-        c.gender !== "none" &&
-        d.gender !== "none" &&
-        c.gender !== d.gender;
-
-    if(!team1Mixed){
-
-        score +=
-            options.mixedStrict
-            ? 1500
-            : 500;
-
-    }
-
-    if(!team2Mixed){
-
-        score +=
-            options.mixedStrict
-            ? 1500
-            : 500;
-
-    }
-
-    return score;
-
-}
-
-/* =====================================================
-   Level Score
-   ===================================================== */
-
-function levelScore(
-    group,
-    options
-){
-
-    if(
-        settings.levelMode ===
-        "random"
-    ){
-        return 0;
-    }
-
-    const a = group[0];
-    const b = group[1];
-
-    const c = group[2];
-    const d = group[3];
-
-    if(
-        settings.levelMode ===
-        "balance"
-    ){
-
-        const teamA =
-            a.level +
-            b.level;
-
-        const teamB =
-            c.level +
-            d.level;
-
-        return (
-            Math.abs(
-                teamA - teamB
-            )
-            * 200
-        );
-
-    }
-
-    if(
-        settings.levelMode ===
-        "unified"
-    ){
-
-        const groups = [
-
-            getLevelGroup(
-                a.level
-            ),
-
-            getLevelGroup(
-                b.level
-            ),
-
-            getLevelGroup(
-                c.level
-            ),
-
-            getLevelGroup(
-                d.level
-            )
-
-        ];
-
-        const diff =
-
-            Math.max(
-                ...groups
-            )
-
-            -
-
-            Math.min(
-                ...groups
-            );
-
-        if(
-            options.levelStrict
-        ){
-
-            return diff * 2000;
-
-        }
-
-        return diff * 500;
-
-    }
-
-    return 0;
 
 }
 
@@ -2238,7 +2474,7 @@ function buildMatch(
             matchId++,
 
         round:
-            currentRound,
+            simulationRound,
 
         status:
             "waiting",
@@ -2527,9 +2763,63 @@ function assignSingleMatch(
         return;
     }
 
+    const busyPlayers =
+        getBusyPlayers();
+
+    let bestIndex = 0;
+
+    let minOverlap = 999;
+
+    waitingMatches.forEach(
+
+        (match,index) => {
+
+            const allPlayers = [
+
+                ...match.teamA,
+                ...match.teamB
+
+            ];
+
+            const overlapCount =
+
+                allPlayers.filter(
+
+                    player =>
+
+                    busyPlayers.includes(
+                        player
+                    )
+
+                ).length;
+
+            if(
+                overlapCount <
+                minOverlap
+            ){
+
+                minOverlap =
+                    overlapCount;
+
+                bestIndex =
+                    index;
+
+            }
+
+        }
+
+    );
+
+    const nextMatch =
+
+        waitingMatches.splice(
+            bestIndex,
+            1
+        )[0];
+
     activeCourts[courtIndex]
         .match =
-        waitingMatches.shift();
+        nextMatch;
 
 }
 
@@ -2580,6 +2870,8 @@ async function resetAll(){
 
     currentRound = 0;
 
+    simulationRound = 0;
+
     matchId = 1;
 
     resetPlayerStats();
@@ -2604,7 +2896,7 @@ async function regenerateSchedule(){
         return;
     }
 
-    generateSchedule();
+    await generateSchedule();
 
 }
 
@@ -2854,6 +3146,28 @@ function renderStats(){
 
     players.forEach(player => {
 
+        const pairCount =
+
+            Object.values(
+                player.partners
+            )
+
+            .reduce(
+                (a,b)=>a+b,
+                0
+            );
+
+        const opponentCount =
+
+            Object.values(
+                player.opponents
+            )
+
+            .reduce(
+                (a,b)=>a+b,
+                0
+            );
+
         const div =
             document.createElement(
                 "div"
@@ -2880,9 +3194,35 @@ function renderStats(){
                 </span>
             </div>
 
+            <div class="stat-row">
+                <span>
+                    予定出場:
+                    ${player.simPlayed}
+                </span>
+
+                <span>
+                    予定休憩:
+                    ${player.simRested}
+                </span>
+            </div>
+
+            <div class="stat-row">
+                <span>
+                    ペア回数:
+                    ${pairCount}
+                </span>
+
+                <span>
+                    対戦回数:
+                    ${opponentCount}
+                </span>
+            </div>
+
         `;
 
-        area.appendChild(div);
+        area.appendChild(
+            div
+        );
 
     });
 
@@ -2895,14 +3235,74 @@ function renderStats(){
 function exportCsv(){
 
     let csv =
-        "試合No,チームA,チームB\n";
+        "試合No,状態,チームA,チームB\n";
+
+    const allMatches = [];
 
     finishedMatches.forEach(
         match => {
 
+            allMatches.push({
+
+                status:"終了",
+
+                match
+
+            });
+
+        }
+    );
+
+    activeCourts.forEach(
+        court => {
+
+            if(court.match){
+
+                allMatches.push({
+
+                    status:"進行中",
+
+                    match:
+                        court.match
+
+                });
+
+            }
+
+        }
+    );
+
+    waitingMatches.forEach(
+        match => {
+
+            allMatches.push({
+
+                status:"待機",
+
+                match
+
+            });
+
+        }
+    );
+
+    allMatches.forEach(
+        item => {
+
+            const match =
+                item.match;
+
             csv +=
 
-                `${match.id},"${match.teamA.join("/")}",`
+                `${match.id},`
+
+                +
+
+                `"${item.status}",`
+
+                +
+
+                `"${match.teamA.join("/")}",`
 
                 +
 
@@ -2914,19 +3314,26 @@ function exportCsv(){
     const blob =
 
         new Blob(
+
             [csv],
+
             {
+
                 type:
-                "text/csv;charset=utf-8"
+                    "text/csv;charset=utf-8"
+
             }
+
         );
 
     const url =
+
         URL.createObjectURL(
             blob
         );
 
     const link =
+
         document.createElement(
             "a"
         );
