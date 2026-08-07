@@ -31,6 +31,10 @@ let deferredPrompt = null;
 
 let simulationRound = 0;
 
+let recentlyPlayedPlayers = [];
+
+let previousRoundPlayers = [];
+
 /* =====================================================
    Settings
    ===================================================== */
@@ -1449,6 +1453,10 @@ async function clearPlayers(){
 
     simulationRound = 0;
 
+    recentlyPlayedPlayers = [];
+
+    previousRoundPlayers = [];
+
     matchId = 1;
 
     saveData();
@@ -1843,6 +1851,10 @@ async function generateSchedule(){
         simulateOpponentHistory(
             match
         );
+        previousRoundPlayers = [
+            ...match.teamA,
+            ...match.teamB
+        ];
 
         simulationRound++;
 
@@ -2076,7 +2088,6 @@ function createBestMatch(
                 shuffle(
                     candidates
                 )
-
                 .slice(
                     0,
                     4
@@ -2092,9 +2103,13 @@ function createBestMatch(
             const score =
 
                 evaluateAdvancedGroup(
+
                     group,
+
                     stage,
+
                     unusedPairExists
+
                 );
 
             if(
@@ -2153,6 +2168,18 @@ function createBestMatch(
     }
 
     return null;
+
+}
+
+function updateRecentlyPlayedPlayers(match){
+
+    recentlyPlayedPlayers = [
+
+        ...match.teamA,
+
+        ...match.teamB
+
+    ];
 
 }
 
@@ -2224,6 +2251,7 @@ function evaluateAdvancedGroup(
     }
 
     score += pair1 * 30000;
+
     score += pair2 * 30000;
 
     score +=
@@ -2235,6 +2263,31 @@ function evaluateAdvancedGroup(
         restScore(
             group
         );
+
+    /*
+      直前試合回避
+      強化版
+    */
+
+    group.forEach(player => {
+
+        if(
+
+            previousRoundPlayers.includes(
+                player.name
+            )
+
+        ){
+
+            score += 50000;
+
+        }
+
+    });
+
+    /*
+      連続出場回避
+    */
 
     group.forEach(player => {
 
@@ -2349,7 +2402,9 @@ function evaluateAdvancedGroup(
             stage.strictLevel &&
             diff > 0
         ){
+
             return 99999999;
+
         }
 
         score +=
@@ -2683,6 +2738,10 @@ async function finishMatch(
         court.match
     );
 
+    updateRecentlyPlayedPlayers(
+        court.match
+    );
+
     finishedMatches.push(
         court.match
     );
@@ -2766,60 +2825,51 @@ function assignSingleMatch(
     const busyPlayers =
         getBusyPlayers();
 
-    let bestIndex = 0;
+    const blockedPlayers = [
 
-    let minOverlap = 999;
+        ...busyPlayers,
 
-    waitingMatches.forEach(
+        ...recentlyPlayedPlayers
 
-        (match,index) => {
+    ];
 
-            const allPlayers = [
+    let candidateIndex =
 
-                ...match.teamA,
-                ...match.teamB
+        waitingMatches.findIndex(
+            match => {
 
-            ];
+                const players = [
 
-            const overlapCount =
+                    ...match.teamA,
 
-                allPlayers.filter(
+                    ...match.teamB
 
+                ];
+
+                return !players.some(
                     player =>
-
-                    busyPlayers.includes(
+                    blockedPlayers.includes(
                         player
                     )
-
-                ).length;
-
-            if(
-                overlapCount <
-                minOverlap
-            ){
-
-                minOverlap =
-                    overlapCount;
-
-                bestIndex =
-                    index;
+                );
 
             }
+        );
 
-        }
+    if(candidateIndex === -1){
 
-    );
+        candidateIndex = 0;
 
-    const nextMatch =
+    }
+
+    activeCourts[
+        courtIndex
+    ].match =
 
         waitingMatches.splice(
-            bestIndex,
+            candidateIndex,
             1
         )[0];
-
-    activeCourts[courtIndex]
-        .match =
-        nextMatch;
 
 }
 
@@ -2829,12 +2879,63 @@ function assignSingleMatch(
 
 function assignBulkMatches(){
 
+    const blockedPlayers =
+
+        [...recentlyPlayedPlayers];
+
     activeCourts.forEach(
         court => {
 
             if(
-                waitingMatches.length > 0
+                waitingMatches.length === 0
             ){
+                return;
+            }
+
+            const index =
+
+                waitingMatches.findIndex(
+                    match => {
+
+                        const players = [
+
+                            ...match.teamA,
+
+                            ...match.teamB
+
+                        ];
+
+                        return !players.some(
+                            player =>
+
+                            blockedPlayers.includes(
+                                player
+                            )
+
+                        );
+
+                    }
+                );
+
+            if(index >= 0){
+
+                const match =
+
+                    waitingMatches.splice(
+                        index,
+                        1
+                    )[0];
+
+                court.match =
+                    match;
+
+                blockedPlayers.push(
+                    ...match.teamA,
+                    ...match.teamB
+                );
+
+            }
+            else{
 
                 court.match =
                     waitingMatches.shift();
@@ -2871,6 +2972,10 @@ async function resetAll(){
     currentRound = 0;
 
     simulationRound = 0;
+
+    recentlyPlayedPlayers = [];
+
+    previousRoundPlayers = [];
 
     matchId = 1;
 
