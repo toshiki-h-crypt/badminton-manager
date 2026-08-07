@@ -1803,64 +1803,112 @@ async function generateSchedule(){
     }
 
     waitingMatches = [];
-
     activeCourts = [];
-
     finishedMatches = [];
 
     currentRound = 0;
-
     simulationRound = 0;
 
     matchId = 1;
 
+    recentlyPlayedPlayers = [];
+    previousRoundPlayers = [];
+
     resetPlayerStats();
 
-    for(
-        let i = 0;
-        i < settings.matchCount;
-        i++
+    while(
+        waitingMatches.length <
+        settings.matchCount
     ){
 
-        const match =
-            createBestMatch();
+        let roundPlayers = [];
 
-        if(!match){
+        const roundMatchCount =
 
-            console.warn(
-                "これ以上試合を生成できません"
+            Math.min(
+                settings.courtCount,
+                Math.floor(
+                    activePlayers.length / 4
+                )
             );
 
-            break;
+        let generated =
+            0;
+
+        for(
+            let court = 0;
+            court < roundMatchCount;
+            court++
+        ){
+
+            const match =
+
+                createBestMatch(
+                    roundPlayers
+                );
+
+            if(!match){
+                break;
+            }
+
+            waitingMatches.push(
+                match
+            );
+
+            roundPlayers.push(
+
+                ...match.teamA,
+
+                ...match.teamB
+
+            );
+
+            simulateMatchStatistics(
+                match
+            );
+
+            simulatePartnerHistory(
+                match
+            );
+
+            simulateOpponentHistory(
+                match
+            );
+
+            generated++;
 
         }
 
-        /*
-         シミュレーション統計
-         （対戦生成用）
-        */
+        if(
+            generated === 0
+        ){
+            break;
+        }
 
-        simulateMatchStatistics(
-            match
-        );
-
-        simulatePartnerHistory(
-            match
-        );
-
-        simulateOpponentHistory(
-            match
-        );
-        previousRoundPlayers = [
-            ...match.teamA,
-            ...match.teamB
-        ];
+        previousRoundPlayers =
+            [...roundPlayers];
 
         simulationRound++;
 
-        waitingMatches.push(
-            match
-        );
+        if(
+            waitingMatches.length >=
+            settings.matchCount
+        ){
+            break;
+        }
+
+    }
+
+    if(
+        waitingMatches.length >
+        settings.matchCount
+    ){
+
+        waitingMatches =
+            waitingMatches.slice(
+                0,
+                settings.matchCount
+            );
 
     }
 
@@ -1877,6 +1925,28 @@ async function generateSchedule(){
     );
 
 }
+
+function overlapsPlayers(
+    match,
+    usedPlayers
+){
+
+    const players = [
+
+        ...match.teamA,
+        ...match.teamB
+
+    ];
+
+    return players.some(
+        player =>
+        usedPlayers.has(
+            player
+        )
+    );
+
+}
+
 function simulateMatchStatistics(match){
 
     const names = [
@@ -2572,58 +2642,58 @@ function initializeCourts(){
 
     }
 
-    const assignedPlayers = [];
+    const usedPlayers =
+        new Set();
 
-    activeCourts.forEach(court => {
+    activeCourts.forEach(
+        court => {
 
-        const index =
+            const index =
 
-            waitingMatches.findIndex(
-                match => {
+                waitingMatches.findIndex(
+                    match =>
 
-                    const players = [
+                    !overlapsPlayers(
+                        match,
+                        usedPlayers
+                    )
 
-                        ...match.teamA,
+                );
 
-                        ...match.teamB
+            if(
+                index === -1
+            ){
+                return;
+            }
 
-                    ];
+            const match =
 
-                    return !players.some(
-                        player =>
+                waitingMatches.splice(
+                    index,
+                    1
+                )[0];
 
-                        assignedPlayers.includes(
-                            player
-                        )
-                    );
+            court.match =
+                match;
 
-                }
+            [
+
+                ...match.teamA,
+                ...match.teamB
+
+            ].forEach(
+                player =>
+
+                usedPlayers.add(
+                    player
+                )
             );
 
-        if(index === -1){
-            return;
         }
-
-        const match =
-
-            waitingMatches.splice(
-                index,
-                1
-            )[0];
-
-        court.match = match;
-
-        assignedPlayers.push(
-
-            ...match.teamA,
-
-            ...match.teamB
-
-        );
-
-    });
+    );
 
 }
+
 /* =====================================================
    Badminton Doubles Manager v6
    Complete Edition
@@ -2984,8 +3054,8 @@ function assignSingleMatch(
 
 function assignBulkMatches(){
 
-    const alreadyAssignedPlayers =
-        [];
+    const usedPlayers =
+        new Set();
 
     activeCourts.forEach(
         court => {
@@ -2998,83 +3068,20 @@ function assignBulkMatches(){
     activeCourts.forEach(
         court => {
 
-            let selectedIndex =
-                -1;
+            const index =
 
-            let bestScore =
-                Number.MAX_SAFE_INTEGER;
+                waitingMatches.findIndex(
+                    match =>
 
-            waitingMatches.forEach(
-                (match,index) => {
+                    !overlapsPlayers(
+                        match,
+                        usedPlayers
+                    )
 
-                    const players = [
-
-                        ...match.teamA,
-                        ...match.teamB
-
-                    ];
-
-                    /*
-                      他コートとの
-                      重複禁止
-                    */
-
-                    const overlap =
-
-                        players.some(
-                            player =>
-
-                            alreadyAssignedPlayers
-                            .includes(
-                                player
-                            )
-
-                        );
-
-                    if(
-                        overlap
-                    ){
-                        return;
-                    }
-
-                    let score = 0;
-
-                    players.forEach(
-                        player => {
-
-                            if(
-
-                                recentlyPlayedPlayers.includes(
-                                    player
-                                )
-
-                            ){
-
-                                score += 1000;
-
-                            }
-
-                        }
-                    );
-
-                    if(
-                        score <
-                        bestScore
-                    ){
-
-                        bestScore =
-                            score;
-
-                        selectedIndex =
-                            index;
-
-                    }
-
-                }
-            );
+                );
 
             if(
-                selectedIndex === -1
+                index === -1
             ){
                 return;
             }
@@ -3082,19 +3089,24 @@ function assignBulkMatches(){
             const match =
 
                 waitingMatches.splice(
-                    selectedIndex,
+                    index,
                     1
                 )[0];
 
             court.match =
                 match;
 
-            alreadyAssignedPlayers.push(
+            [
 
                 ...match.teamA,
-
                 ...match.teamB
 
+            ].forEach(
+                player =>
+
+                usedPlayers.add(
+                    player
+                )
             );
 
         }
@@ -3144,148 +3156,7 @@ async function resetAll(){
 
 }
 
-async function generateSchedule(){
 
-    saveSettings();
-
-    const activePlayers =
-        getActivePlayers();
-
-    if(
-        activePlayers.length < 4
-    ){
-
-        await showAlert(
-            "参加者は4人以上必要です"
-        );
-
-        return;
-
-    }
-
-    waitingMatches = [];
-    activeCourts = [];
-    finishedMatches = [];
-
-    currentRound = 0;
-    simulationRound = 0;
-
-    matchId = 1;
-
-    recentlyPlayedPlayers = [];
-    previousRoundPlayers = [];
-
-    resetPlayerStats();
-
-    while(
-        waitingMatches.length <
-        settings.matchCount
-    ){
-
-        let roundPlayers = [];
-
-        const roundMatchCount =
-
-            Math.min(
-                settings.courtCount,
-                Math.floor(
-                    activePlayers.length / 4
-                )
-            );
-
-        let generated =
-            0;
-
-        for(
-            let court = 0;
-            court < roundMatchCount;
-            court++
-        ){
-
-            const match =
-
-                createBestMatch(
-                    roundPlayers
-                );
-
-            if(!match){
-                break;
-            }
-
-            waitingMatches.push(
-                match
-            );
-
-            roundPlayers.push(
-
-                ...match.teamA,
-
-                ...match.teamB
-
-            );
-
-            simulateMatchStatistics(
-                match
-            );
-
-            simulatePartnerHistory(
-                match
-            );
-
-            simulateOpponentHistory(
-                match
-            );
-
-            generated++;
-
-        }
-
-        if(
-            generated === 0
-        ){
-            break;
-        }
-
-        previousRoundPlayers =
-            [...roundPlayers];
-
-        simulationRound++;
-
-        if(
-            waitingMatches.length >=
-            settings.matchCount
-        ){
-            break;
-        }
-
-    }
-
-    if(
-        waitingMatches.length >
-        settings.matchCount
-    ){
-
-        waitingMatches =
-            waitingMatches.slice(
-                0,
-                settings.matchCount
-            );
-
-    }
-
-    initializeCourts();
-
-    saveData();
-
-    renderAll();
-
-    renderStats();
-
-    switchTab(
-        "matches"
-    );
-
-}
 
 /* =====================================================
    Remaining Count
