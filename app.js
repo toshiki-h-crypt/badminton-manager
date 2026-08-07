@@ -2557,27 +2557,71 @@ function initializeCourts(){
     activeCourts = [];
 
     for(
-        let i=0;
-        i<settings.courtCount;
+        let i = 0;
+        i < settings.courtCount;
         i++
     ){
 
-        if(
-            waitingMatches.length === 0
-        ){
-            break;
-        }
-
         activeCourts.push({
 
-            courtNo:i+1,
+            courtNo : i + 1,
 
-            match:
-                waitingMatches.shift()
+            match : null
 
         });
 
     }
+
+    const assignedPlayers = [];
+
+    activeCourts.forEach(court => {
+
+        const index =
+
+            waitingMatches.findIndex(
+                match => {
+
+                    const players = [
+
+                        ...match.teamA,
+
+                        ...match.teamB
+
+                    ];
+
+                    return !players.some(
+                        player =>
+
+                        assignedPlayers.includes(
+                            player
+                        )
+                    );
+
+                }
+            );
+
+        if(index === -1){
+            return;
+        }
+
+        const match =
+
+            waitingMatches.splice(
+                index,
+                1
+            )[0];
+
+        court.match = match;
+
+        assignedPlayers.push(
+
+            ...match.teamA,
+
+            ...match.teamB
+
+        );
+
+    });
 
 }
 /* =====================================================
@@ -3100,19 +3144,146 @@ async function resetAll(){
 
 }
 
-async function regenerateSchedule(){
+async function generateSchedule(){
 
-    const result =
+    saveSettings();
 
-        await showConfirm(
-            "対戦表を再生成しますか？"
+    const activePlayers =
+        getActivePlayers();
+
+    if(
+        activePlayers.length < 4
+    ){
+
+        await showAlert(
+            "参加者は4人以上必要です"
         );
 
-    if(!result){
         return;
+
     }
 
-    await generateSchedule();
+    waitingMatches = [];
+    activeCourts = [];
+    finishedMatches = [];
+
+    currentRound = 0;
+    simulationRound = 0;
+
+    matchId = 1;
+
+    recentlyPlayedPlayers = [];
+    previousRoundPlayers = [];
+
+    resetPlayerStats();
+
+    while(
+        waitingMatches.length <
+        settings.matchCount
+    ){
+
+        let roundPlayers = [];
+
+        const roundMatchCount =
+
+            Math.min(
+                settings.courtCount,
+                Math.floor(
+                    activePlayers.length / 4
+                )
+            );
+
+        let generated =
+            0;
+
+        for(
+            let court = 0;
+            court < roundMatchCount;
+            court++
+        ){
+
+            const match =
+
+                createBestMatch(
+                    roundPlayers
+                );
+
+            if(!match){
+                break;
+            }
+
+            waitingMatches.push(
+                match
+            );
+
+            roundPlayers.push(
+
+                ...match.teamA,
+
+                ...match.teamB
+
+            );
+
+            simulateMatchStatistics(
+                match
+            );
+
+            simulatePartnerHistory(
+                match
+            );
+
+            simulateOpponentHistory(
+                match
+            );
+
+            generated++;
+
+        }
+
+        if(
+            generated === 0
+        ){
+            break;
+        }
+
+        previousRoundPlayers =
+            [...roundPlayers];
+
+        simulationRound++;
+
+        if(
+            waitingMatches.length >=
+            settings.matchCount
+        ){
+            break;
+        }
+
+    }
+
+    if(
+        waitingMatches.length >
+        settings.matchCount
+    ){
+
+        waitingMatches =
+            waitingMatches.slice(
+                0,
+                settings.matchCount
+            );
+
+    }
+
+    initializeCourts();
+
+    saveData();
+
+    renderAll();
+
+    renderStats();
+
+    switchTab(
+        "matches"
+    );
 
 }
 
