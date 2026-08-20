@@ -1,639 +1,185 @@
-/* =====================================================
-   Badminton Doubles Manager v6
-   Complete Edition
-   ===================================================== */
-
-/* =====================================================
-   Reset
-   ===================================================== */
-
 *{
-    margin:0;
-    padding:0;
     box-sizing:border-box;
 }
 
-html{
-    font-size:16px;
-}
-
 body{
-    font-family:
-        "Yu Gothic",
-        "Hiragino Sans",
-        sans-serif;
-    background:#f5f7f9;
-    color:#333;
-    min-height:100vh;
+    margin:0;
+    background:#f4f4f4;
+    font-family:sans-serif;
 }
-
-/* =====================================================
-   Utility
-   ===================================================== */
-
-.hidden{
-    display:none !important;
-}
-
-/* =====================================================
-   Header
-   ===================================================== */
 
 header{
-    position:sticky;
-    top:0;
-    z-index:100;
-    background:#ffffff;
-    padding:12px;
-    box-shadow:
-        0 2px 8px rgba(0,0,0,.08);
+    text-align:center;
+    background:#2e7d32;
+    color:white;
+    padding:15px;
 }
 
-.header-row{
+.tabs{
     display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.logo{
-    font-size:34px;
-}
-
-header h1{
-    font-size:20px;
-}
-
-.subtitle{
-    color:#666;
-    font-size:12px;
-}
-
-/* =====================================================
-   Install Button
-   ===================================================== */
-
-.install-btn{
-    width:100%;
-    margin-top:10px;
-    border:none;
-    border-radius:10px;
-    background:#2563eb;
-    color:#fff;
-    padding:12px;
-    font-weight:bold;
-}
-
-/* =====================================================
-   Tabs
-   ===================================================== */
-
-nav{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
 }
 
 .tab{
     flex:1;
+    padding:15px;
     border:none;
-    border-radius:10px;
-    background:#e5e7eb;
-    padding:12px;
+    background:#ddd;
     font-weight:bold;
-    cursor:pointer;
 }
 
 .tab.active{
-    background:#22c55e;
-    color:#fff;
+    background:#4caf50;
+    color:white;
 }
-
-/* =====================================================
-   Main
-   ===================================================== */
 
 main{
-    max-width:1100px;
-    margin:auto;
-    padding:12px;
+    padding:10px;
 }
 
-/* =====================================================
-   Card
-   ===================================================== */
+.tab-content{
+    display:none;
+}
+
+.tab-content.active{
+    display:block;
+}
 
 .card{
-    background:#fff;
-    border-radius:12px;
+    background:white;
     padding:15px;
-    margin-bottom:12px;
-    box-shadow:
-        0 2px 6px rgba(0,0,0,.08);
+    border-radius:10px;
+    margin-bottom:15px;
 }
-
-.card h2{
-    margin-bottom:10px;
-}
-
-.card h3{
-    margin-top:15px;
-    margin-bottom:10px;
-}
-
-/* =====================================================
-   Sticky
-   ===================================================== */
 
 .sticky-card{
     position:sticky;
-    top:110px;
-    z-index:50;
+    top:0;
+    z-index:100;
 }
 
-/* =====================================================
-   Separator
-   ===================================================== */
-
-.separator{
-    border:none;
-    border-top:1px solid #ddd;
-    margin:15px 0;
-}
-
-/* =====================================================
-   Text
-   ===================================================== */
-
-.help-text{
-    font-size:13px;
-    color:#666;
-    margin-bottom:10px;
-}
-
-.warning-message{
-    color:#dc2626;
-    font-size:13px;
-    font-weight:bold;
-    margin-top:6px;
-}
-
-/* =====================================================
-   Forms
-   ===================================================== */
-
-label{
-    display:block;
-    margin-top:10px;
-    margin-bottom:6px;
-    font-weight:bold;
-}
-
-textarea{
-    width:100%;
-    min-height:120px;
-    resize:vertical;
-    border:1px solid #ccc;
-    border-radius:10px;
-    padding:10px;
-}
-
-input[type="number"],
-input[type="text"],
+input,
+textarea,
 select{
     width:100%;
-    border:1px solid #ccc;
-    border-radius:10px;
     padding:10px;
+    margin-top:5px;
     margin-bottom:10px;
 }
 
-/* =====================================================
-   Buttons
-   ===================================================== */
-
 button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
     cursor:pointer;
 }
 
-.primary{
-    background:#16a34a;
+.success{
+    background:#2e7d32;
     color:white;
-    border:none;
 }
 
 .danger{
-    background:#dc2626;
+    background:#c62828;
     color:white;
-    border:none;
 }
 
-.big-btn{
-    width:100%;
-    padding:14px;
-    border-radius:10px;
-    margin-bottom:10px;
-}
-
-#addPlayerBtn,
-#autoCreateBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#16a34a;
+.primary{
+    background:#1565c0;
     color:white;
-    padding:12px;
-    margin-top:10px;
 }
 
-#clearPlayersBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#dc2626;
+.warning{
+    background:#ef6c00;
     color:white;
-    padding:12px;
-    margin-top:12px;
 }
 
-#generateBtn{
-    background:#16a34a;
-}
-
-#resetBtn{
-    background:#dc2626;
-}
-
-#regenerateBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#f59e0b;
+.secondary{
+    background:#555;
     color:white;
-    padding:12px;
-    margin-bottom:10px;
 }
 
-#csvBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#2563eb;
-    color:white;
-    padding:12px;
+.inline-group{
+    display:flex;
+    gap:10px;
 }
 
-#showStatsBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#16a34a;
-    color:white;
-    padding:12px;
-    margin-bottom:10px;
+.summary{
+    font-size:18px;
+    font-weight:bold;
+    margin:10px 0;
 }
 
-#darkModeBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#374151;
-    color:white;
-    padding:12px;
-}
-
-#toggleFinishedBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#64748b;
-    color:white;
-    padding:10px;
-    margin-bottom:10px;
-}
-
-#clearFinishedBtn{
-    width:100%;
-    border:none;
-    border-radius:10px;
-    background:#dc2626;
-    color:white;
-    padding:10px;
-    margin-bottom:10px;
-}
-
-/* =====================================================
-   Player List
-   ===================================================== */
-
-#playerList{
-    list-style:none;
-    border:1px solid #ddd;
-    border-radius:10px;
-    margin-top:10px;
-    max-height:500px;
-    overflow-y:auto;
-}
-
-#playerList li{
-    padding:10px;
-    border-bottom:1px solid #eee;
+.hidden{
+    display:none;
 }
 
 .player-row{
     display:flex;
     align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-}
-
-.player-name{
-    min-width:80px;
-    font-weight:bold;
-}
-
-.gender-select{
-    width:65px;
-    min-width:65px;
-    margin:0;
-    padding:6px;
-}
-
-.delete-btn{
-    border:none;
-    background:none;
-    color:#dc2626;
-    font-size:18px;
-}
-
-/* =====================================================
-   Level Stars
-   ===================================================== */
-
-.star-area{
-    display:flex;
-    gap:2px;
-}
-
-.star{
-    color:#d1d5db;
-    font-size:20px;
-    cursor:pointer;
-    user-select:none;
-    transition:.15s;
-}
-
-.star.active{
-    color:#f59e0b;
-}
-
-.star:hover{
-    transform:scale(1.15);
-}
-
-/* =====================================================
-   Court Area
-   ===================================================== */
-
-#courtArea,
-#waitingArea,
-#finishedArea{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-.court-card{
-    background:#ecfdf5;
-    border:2px solid #22c55e;
-    border-radius:12px;
-    padding:10px;
-}
-
-.court-title{
-    font-weight:bold;
+    gap:8px;
     margin-bottom:8px;
 }
 
-.court-line{
+.player-name{
+    flex:1;
+}
+
+.player-gender{
+    width:80px;
+}
+
+.player-level{
+    width:130px;
+}
+
+.delete-player{
+    width:50px;
+}
+
+.match-row{
+    padding:10px;
+    border-bottom:1px solid #ddd;
+}
+
+.top-line{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    flex-wrap:wrap;
-    gap:10px;
 }
 
-.finish-btn-small{
-    border:none;
-    border-radius:8px;
-    background:#2563eb;
-    color:#fff;
-    padding:6px 12px;
-}
-
-/* =====================================================
-   Match Cards
-   ===================================================== */
-
-.match-card{
-    border:1px solid #ddd;
-    border-radius:10px;
-    padding:10px;
-}
-
-.match-number{
-    font-weight:bold;
-    margin-bottom:5px;
-}
-
-.waiting-match{
-    background:#fff;
-}
-
-.finished-match{
-    background:#f3f4f6;
-}
-
-/* =====================================================
-   Finished
-   ===================================================== */
-
-#finishedContainer{
-    max-height:40vh;
+#waitingMatchList{
+    max-height:350px;
     overflow-y:auto;
-    border-top:1px solid #ddd;
-    padding-top:10px;
 }
 
-/* =====================================================
-   Statistics
-   ===================================================== */
-
-.stat-card{
-    border-bottom:1px solid #eee;
-    padding:12px 0;
+.infoArea{
+    font-size:14px;
+    color:#555;
+    margin-bottom:10px;
 }
 
-.stat-name{
-    font-size:16px;
-    font-weight:bold;
-}
-
-.stat-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    margin-top:6px;
-}
-
-/* =====================================================
-   Modal
-   ===================================================== */
-
-.modal-overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.45);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:1000;
-}
-
-.modal{
-    width:90%;
-    max-width:340px;
-    background:white;
-    border-radius:12px;
-    padding:20px;
-}
-
-#modalMessage{
-    line-height:1.6;
-}
-
-.modal-buttons{
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
-    margin-top:20px;
-}
-
-#modalCancel{
-    border:none;
-    border-radius:8px;
-    background:#9ca3af;
-    color:white;
-    padding:10px 14px;
-}
-
-#modalOk{
-    border:none;
-    border-radius:8px;
-    background:#2563eb;
-    color:white;
-    padding:10px 14px;
-}
-
-/* =====================================================
-   Footer
-   ===================================================== */
-
-footer{
-    text-align:center;
-    padding:20px;
-    color:#888;
-}
-
-/* =====================================================
-   Responsive
-   ===================================================== */
-
-@media (max-width:640px){
-
-    .player-row{
-        gap:6px;
-    }
-
-    .player-name{
-        min-width:60px;
-    }
-
-    .gender-select{
-        width:60px;
-        min-width:60px;
-    }
-
-    .star{
-        font-size:18px;
-    }
-
-}
-
-/* =====================================================
-   Dark Mode
-   ===================================================== */
-
-.dark-mode{
-    background:#111827;
-    color:#f3f4f6;
-}
-
-.dark-mode header{
-    background:#1f2937;
-}
-
-.dark-mode .card{
-    background:#1f2937;
-    color:#f3f4f6;
-}
-
-.dark-mode textarea,
-.dark-mode input,
-.dark-mode select{
-    background:#374151;
-    color:white;
-    border-color:#4b5563;
-}
-
-.dark-mode .tab{
-    background:#374151;
+body.dark{
+    background:#111;
     color:white;
 }
 
-.dark-mode .tab.active{
-    background:#22c55e;
+body.dark .card{
+    background:#222;
 }
 
-.dark-mode .court-card{
-    background:#064e3b;
-}
-
-.dark-mode .match-card{
-    background:#374151;
-    border-color:#4b5563;
-}
-
-.dark-mode #playerList{
-    border-color:#4b5563;
-}
-
-.dark-mode #playerList li{
-    border-color:#4b5563;
-}
-
-.dark-mode .modal{
-    background:#1f2937;
+body.dark input,
+body.dark textarea,
+body.dark select{
+    background:#333;
     color:white;
 }
 
-.dark-mode .warning-message{
-    color:#f87171;
+body.dark .tab{
+    background:#444;
+    color:white;
 }
 
-.dark-mode .star{
-    color:#6b7280;
-}
-
-.dark-mode .star.active{
-    color:#fbbf24;
+body.dark .tab.active{
+    background:#2e7d32;
 }

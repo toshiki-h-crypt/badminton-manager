@@ -1,13 +1,6 @@
-/* =====================================================
-   Badminton Doubles Manager
-   Service Worker
-   ===================================================== */
+const CACHE_NAME = "doubles-manager-v1";
 
-const CACHE_NAME =
-    "badminton-manager-v1";
-
-const CACHE_FILES = [
-
+const urlsToCache = [
     "./",
     "./index.html",
     "./style.css",
@@ -15,108 +8,30 @@ const CACHE_FILES = [
     "./manifest.json",
     "./icons/icon-192.png",
     "./icons/icon-512.png"
-
 ];
 
-/* =====================================================
-   Install
-   ===================================================== */
+self.addEventListener("install", event => {
 
-self.addEventListener(
-    "install",
-    event => {
+    event.waitUntil(
 
-        event.waitUntil(
+        caches.open(CACHE_NAME)
+        .then(cache => cache.addAll(urlsToCache))
 
-            caches.open(
-                CACHE_NAME
-            )
+    );
 
-            .then(cache => {
+});
 
-                return cache.addAll(
-                    CACHE_FILES
-                );
+self.addEventListener("fetch", event => {
 
-            })
+    event.respondWith(
 
-        );
+        caches.match(event.request)
+        .then(response => {
 
-        self.skipWaiting();
+            return response || fetch(event.request);
 
-    }
-);
+        })
 
-/* =====================================================
-   Activate
-   ===================================================== */
+    );
 
-self.addEventListener(
-    "activate",
-    event => {
-
-        event.waitUntil(
-
-            caches.keys()
-
-            .then(keys => {
-
-                return Promise.all(
-
-                    keys.map(key => {
-
-                        if(
-                            key !== CACHE_NAME
-                        ){
-
-                            return caches.delete(
-                                key
-                            );
-
-                        }
-
-                    })
-
-                );
-
-            })
-
-        );
-
-        self.clients.claim();
-
-    }
-);
-
-/* =====================================================
-   Fetch
-   ===================================================== */
-
-self.addEventListener(
-    "fetch",
-    event => {
-
-        event.respondWith(
-
-            caches.match(
-                event.request
-            )
-
-            .then(response => {
-
-                if(response){
-
-                    return response;
-
-                }
-
-                return fetch(
-                    event.request
-                );
-
-            })
-
-        );
-
-    }
-);
+});
