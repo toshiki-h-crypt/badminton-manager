@@ -539,7 +539,7 @@ function addNumberPlayers() {
             id: generateId(),
 
             name:
-                `プレイヤー${startNo + i}`,
+                `${startNo + i}`,
 
             gender: "",
 
