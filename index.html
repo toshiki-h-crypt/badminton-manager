@@ -2,327 +2,442 @@
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>ダブルス対戦管理</title>
+<meta charset="UTF-8">
 
-    <meta name="theme-color" content="#2e7d32">
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1.0">
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
+<title>ダブルス対戦管理</title>
+
+<meta
+    name="theme-color"
+    content="#2e7d32">
+
+<link
+    rel="manifest"
+    href="manifest.json">
+
+<link
+    rel="stylesheet"
+    href="style.css">
+
 </head>
 
 <body>
 
-<header>
-    <h1>🏸 ダブルス対戦管理</h1>
+<header class="app-header">
+
+    <h1>
+        🎾 ダブルス対戦管理
+    </h1>
+
 </header>
 
 <nav class="tabs">
 
-    <button class="tab active" data-tab="settings">
+    <button
+        class="tab-button active"
+        data-tab="settingTab">
+
         設定
+
     </button>
 
-    <button class="tab" data-tab="matches">
+    <button
+        class="tab-button"
+        data-tab="matchTab">
+
         試合
+
     </button>
 
-    <button class="tab" data-tab="admin">
+    <button
+        class="tab-button"
+        data-tab="adminTab">
+
         管理
+
     </button>
 
 </nav>
 
 <main>
 
-<!-- 設定 -->
+    <!-- ========================= -->
+    <!-- 設定 -->
+    <!-- ========================= -->
 
-<section id="settings" class="tab-content active">
+    <section
+        id="settingTab"
+        class="tab-content active">
 
-    <div class="card">
+        <div class="card">
 
-        <h2>参加者登録</h2>
+            <h2>参加者登録</h2>
 
-        <label>
-            人数登録
-        </label>
+            <label>
+                人数登録
+            </label>
 
-        <div class="inline-group">
+            <div class="row">
 
-            <input
-                type="number"
-                id="numberPlayerCount"
-                min="1"
-                placeholder="人数">
+                <input
+                    id="numberInput"
+                    type="number"
+                    min="1"
+                    placeholder="人数">
 
-            <button id="addNumberPlayersBtn">
-                番号登録
-            </button>
+                <button
+                    id="addNumberBtn">
 
-        </div>
+                    人数登録
 
-        <label>
-            名前登録
-        </label>
+                </button>
 
-        <textarea
-            id="playerNames"
-            rows="5"
-            placeholder="改行・スペース・カンマで複数登録可"></textarea>
+            </div>
 
-        <button id="addNamePlayersBtn">
-            参加者追加
-        </button>
+            <label>
+                名前登録
+            </label>
 
-        <div class="summary">
-
-            参加人数：
-            <span id="playerCount">0</span>
-            人
-
-        </div>
-
-        <button id="togglePlayerListBtn">
-            ▼参加者表示
-        </button>
-
-        <div id="playerArea" class="hidden">
-
-            <div id="playerList"></div>
-
-        </div>
-
-        <button class="danger" id="deleteAllPlayersBtn">
-            参加者一括削除
-        </button>
-
-    </div>
-
-    <div class="card">
-
-        <h2>試合設定</h2>
-
-        <label>
-            使用コート数
-        </label>
-
-        <select id="courtCount"></select>
-
-        <div id="courtInfo" class="infoArea"></div>
-
-        <label>
-            作成試合数
-        </label>
-
-        <input
-            type="number"
-            id="matchLimit"
-            value="30"
-            placeholder="-">
-
-        <label>
-            試合進行方式
-        </label>
-
-        <select id="matchMode">
-
-            <option value="bulk">
-                一括進行
-            </option>
-
-            <option value="individual">
-                個別進行
-            </option>
-
-        </select>
-
-        <div id="matchModeInfo" class="infoArea"></div>
-
-    </div>
-
-    <div class="card">
-
-        <button class="success" id="generateFixtureBtn">
-            対戦表生成
-        </button>
-
-        <button class="danger" id="resetFixtureBtn">
-            対戦表リセット
-        </button>
-
-    </div>
-
-</section>
-
-<!-- 試合 -->
-
-<section id="matches" class="tab-content">
-
-    <div class="card sticky-card">
-
-        <div class="top-line">
-
-            <h2>現在進行中</h2>
-
-            <span>
-                生成済み：
-                <span id="generatedMatchCount">0</span>
-            </span>
-
-        </div>
-
-        <button
-            id="finishAllBtn"
-            class="primary">
-
-            全試合終了
-
-        </button>
-
-        <div id="activeCourtArea"></div>
-
-    </div>
-
-    <div class="card" id="waitingArea">
-
-        <h2>待機試合</h2>
-
-        <div id="waitingMatchList"></div>
-
-    </div>
-
-    <div class="card">
-
-        <div class="top-line">
-
-            <h2>
-                終了試合
-            </h2>
+            <textarea
+                id="nameInput"
+                rows="4"
+                placeholder="改行・スペース・カンマ区切りで複数登録可能"></textarea>
 
             <button
-                id="toggleFinishedBtn">
+                id="addNameBtn">
 
-                ▼展開
+                参加者追加
+
+            </button>
+
+            <div id="participantSummary">
+
+                参加人数：
+                <span id="totalCount">
+                    0
+                </span>
+                人
+
+                （男：
+                <span id="maleCount">
+                    0
+                </span>
+
+                女：
+                <span id="femaleCount">
+                    0
+                </span>
+
+                未：
+                <span id="unknownCount">
+                    0
+                </span>
+                ）
+
+            </div>
+
+            <button id="toggleParticipantBtn">
+                ▼参加者表示
+            </button>
+
+            <div id="participantListContainer">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+                        <th>No</th>
+                        <th>名前</th>
+                        <th>レベル</th>
+                        <th>性別</th>
+                        <th>削除</th>
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="participantTableBody">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <button
+                id="deleteAllBtn"
+                class="danger">
+
+                参加者一括削除
 
             </button>
 
         </div>
 
-        <div
-            id="finishedMatchList"
-            class="hidden"></div>
+        <div class="card">
 
-        <button
-            id="clearFinishedBtn"
-            class="danger">
+            <h2>試合設定</h2>
 
-            履歴クリア
+            <label>
+                使用コート数
+            </label>
+
+            <select id="courtCount">
+            </select>
+
+            <label>
+                全コート合計試合数（継続確認まで）
+            </label>
+
+            <input
+                id="totalMatches"
+                type="number"
+                value="30"
+                min="1">
+
+            <label>
+                試合進行方式
+            </label>
+
+            <select id="playMode">
+
+                <option value="batch">
+                    一括進行
+                </option>
+
+                <option value="individual">
+                    個別進行
+                </option>
+
+            </select>
+
+            <label>
+                オプション設定
+            </label>
+
+            <select id="optionMode">
+
+                <option value="-">
+                    －
+                </option>
+
+                <option value="levelBalance">
+                    レベル均等
+                </option>
+
+                <option value="levelUnified">
+                    レベル統一
+                </option>
+
+                <option value="mix">
+                    ミックス優先
+                </option>
+
+            </select>
+
+            <button
+                id="startMatchBtn"
+                class="success">
+
+                試合開始
+
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- 試合 -->
+    <!-- ========================= -->
+
+    <section
+        id="matchTab"
+        class="tab-content">
+
+        <div class="card">
+
+            <label>
+                試合進行方式
+            </label>
+
+            <select id="matchPlayMode">
+
+                <option value="batch">
+                    一括進行
+                </option>
+
+                <option value="individual">
+                    個別進行
+                </option>
+
+            </select>
+
+            <div id="batchControls">
+
+                <button
+                    id="finishAllBtn"
+                    class="info">
+
+                    試合終了
+
+                </button>
+
+                <button
+                    id="nextAllBtn"
+                    class="warning">
+
+                    次試合開始
+
+                </button>
+
+            </div>
+
+            <div id="matchInfo">
+
+                第1試合
+
+            </div>
+
+        </div>
+
+        <div id="courtContainer">
+        </div>
+
+        <button id="toggleBenchBtn">
+
+            ▼待機選手表示
 
         </button>
 
-    </div>
+        <div id="benchContainer">
 
-    <div class="card">
+            <table>
 
-        <button
-            id="reGenerateBtn"
-            class="warning">
+                <thead>
 
-            対戦表を再設定
+                <tr>
+                    <th>No</th>
+                    <th>名前</th>
+                    <th>レベル</th>
+                    <th>休憩</th>
+                </tr>
 
-        </button>
+                </thead>
 
-    </div>
+                <tbody id="benchTableBody">
+                </tbody>
 
-</section>
+            </table>
 
-<!-- 管理 -->
+        </div>
 
-<section id="admin" class="tab-content">
+    </section>
 
-    <div class="card">
+    <!-- ========================= -->
+    <!-- 管理 -->
+    <!-- ========================= -->
 
-        <button
-            id="installBtn"
-            class="primary">
+    <section
+        id="adminTab"
+        class="tab-content">
 
-            アプリをインストール
+        <div class="card">
 
-        </button>
+            <h2>データ管理</h2>
 
-    </div>
+            <label>
+                自動保存
+            </label>
 
-    <div class="card">
+            <select id="autoSave">
 
-        <h2>データ管理</h2>
+                <option value="on">
+                    ON
+                </option>
 
-        <label>
-            自動保存
-        </label>
+                <option value="off">
+                    OFF
+                </option>
 
-        <select id="autoSave">
+            </select>
 
-            <option value="on">
-                ON
-            </option>
+        </div>
 
-            <option value="off">
-                OFF
-            </option>
+        <div class="card">
 
-        </select>
+            <h2>組み合わせスコア設定</h2>
 
-    </div>
+            <label>同一ペア減点</label>
+            <input id="pairPenalty" type="number">
 
-    <div class="card">
+            <label>同一対戦減点</label>
+            <input id="opponentPenalty" type="number">
 
-        <h2>拡張機能</h2>
+            <label>出場均等加点</label>
+            <input id="playBalanceBonus" type="number">
 
-        <label>
-            拡張機能設定
-        </label>
+            <label>連続出場減点</label>
+            <input id="consecutivePlayPenalty" type="number">
 
-        <select id="extensionMode">
+            <label>レベル一致加点</label>
+            <input id="levelBonus" type="number">
 
-            <option value="none">
-                -
-            </option>
+            <label>ミックス加点</label>
+            <input id="mixBonus" type="number">
 
-            <option value="level-balance">
-                レベル均等
-            </option>
+            <label>コート変更加点</label>
+            <input id="courtChangeBonus" type="number">
 
-            <option value="level-unify">
-                レベル統一
-            </option>
+            <label>出場回数差分の優先基準</label>
+            <input id="playCountGapThreshold" type="number" min="1" step="1">
 
-            <option value="mix">
-                ミックス優先
-            </option>
+            <label>候補探索回数</label>
+            <input id="searchCount" type="number">
 
-        </select>
+            <button
+                id="resetScoreSettingBtn">
 
-        <div
-            id="extensionInfo"
-            class="infoArea"></div>
+                デフォルトに戻す
 
-    </div>
+            </button>
 
-    <div class="card">
+        </div>
+
+        <div class="card">
+
+            <h2>拡張機能</h2>
+
+            <select id="featureMode">
+
+                <option value="-">
+                    －
+                </option>
+
+            </select>
+
+        </div>
 
         <button
             id="darkModeBtn"
-            class="secondary">
+            class="dark">
 
             ダークモード切替
 
         </button>
 
-    </div>
+        <button
+            id="resetAppBtn"
+            class="danger">
 
-</section>
+            データ初期化
+
+        </button>
+
+    </section>
 
 </main>
 
