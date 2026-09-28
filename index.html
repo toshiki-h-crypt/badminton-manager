@@ -371,39 +371,55 @@
 
             <h2>組み合わせスコア設定</h2>
 
-            <label>同一ペア減点</label>
-            <input id="pairPenalty" type="number">
-
-            <label>同一対戦減点</label>
-            <input id="opponentPenalty" type="number">
-
-            <label>出場均等加点</label>
-            <input id="playBalanceBonus" type="number">
-
-            <label>連続出場減点</label>
-            <input id="consecutivePlayPenalty" type="number">
-
-            <label>レベル一致加点</label>
-            <input id="levelBonus" type="number">
-
-            <label>ミックス加点</label>
-            <input id="mixBonus" type="number">
-
-            <label>コート変更加点</label>
-            <input id="courtChangeBonus" type="number">
-
-            <label>出場回数差分の優先基準</label>
-            <input id="playCountGapThreshold" type="number" min="1" step="1">
-
-            <label>候補探索回数</label>
-            <input id="searchCount" type="number">
-
             <button
-                id="resetScoreSettingBtn">
+                id="toggleScoreSettingsBtn"
+                type="button"
+                aria-expanded="false"
+                aria-controls="scoreSettingsContent">
 
-                デフォルトに戻す
+                設定を表示
 
             </button>
+
+            <div
+                id="scoreSettingsContent"
+                class="hidden">
+
+                <label>同一ペア減点</label>
+                <input id="pairPenalty" type="number">
+
+                <label>同一対戦減点</label>
+                <input id="opponentPenalty" type="number">
+
+                <label>出場均等加点</label>
+                <input id="playBalanceBonus" type="number">
+
+                <label>連続出場減点</label>
+                <input id="consecutivePlayPenalty" type="number">
+
+                <label>レベル一致加点</label>
+                <input id="levelBonus" type="number">
+
+                <label>ミックス加点</label>
+                <input id="mixBonus" type="number">
+
+                <label>コート変更加点</label>
+                <input id="courtChangeBonus" type="number">
+
+                <label>出場回数差分の優先基準</label>
+                <input id="playCountGapThreshold" type="number" min="1" step="1">
+
+                <label>候補探索回数</label>
+                <input id="searchCount" type="number">
+
+                <button
+                    id="resetScoreSettingBtn">
+
+                    デフォルトに戻す
+
+                </button>
+
+            </div>
 
         </div>
 
@@ -434,6 +450,14 @@
             class="danger">
 
             データ初期化
+
+        </button>
+
+        <button
+            id="clearAppCacheBtn"
+            type="button">
+
+            キャッシュを削除
 
         </button>
 

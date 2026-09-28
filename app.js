@@ -380,6 +380,11 @@ function bindMatchEvents() {
 
 function bindAdminEvents() {
 
+    const toggleScoreSettingsBtn =
+        document.getElementById(
+            "toggleScoreSettingsBtn"
+        );
+
     const resetScoreBtn =
         document.getElementById(
             "resetScoreSettingBtn"
@@ -394,6 +399,20 @@ function bindAdminEvents() {
         document.getElementById(
             "resetAppBtn"
         );
+
+    const clearAppCacheBtn =
+        document.getElementById(
+            "clearAppCacheBtn"
+        );
+
+    if (toggleScoreSettingsBtn) {
+
+        toggleScoreSettingsBtn.addEventListener(
+            "click",
+            toggleScoreSettings
+        );
+
+    }
 
     if (resetScoreBtn) {
 
@@ -421,6 +440,44 @@ function bindAdminEvents() {
         );
 
     }
+
+    if (clearAppCacheBtn) {
+
+        clearAppCacheBtn.addEventListener(
+            "click",
+            clearAppCache
+        );
+
+    }
+
+}
+
+function toggleScoreSettings() {
+
+    const content =
+        document.getElementById(
+            "scoreSettingsContent"
+        );
+
+    const button =
+        document.getElementById(
+            "toggleScoreSettingsBtn"
+        );
+
+    if (!content || !button) {
+        return;
+    }
+
+    const isExpanded =
+        button.getAttribute("aria-expanded") === "true";
+
+    content.classList.toggle("hidden", isExpanded);
+    button.setAttribute(
+        "aria-expanded",
+        String(!isExpanded)
+    );
+    button.textContent =
+        isExpanded ? "設定を表示" : "設定を隠す";
 
 }
 
@@ -1649,6 +1706,64 @@ function resetApplication() {
 
 }
 
+async function clearAppCache() {
+
+    const confirmed = confirm(
+        "アプリのキャッシュを削除しますか？\n参加者や試合の保存データは削除されません。"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    if (!("caches" in window)) {
+        alert("このブラウザではアプリのキャッシュを削除できません。");
+        return;
+    }
+
+    const button =
+        document.getElementById("clearAppCacheBtn");
+
+    if (button) {
+        button.disabled = true;
+    }
+
+    try {
+        const cacheNames =
+            await window.caches.keys();
+
+        const appCacheNames =
+            cacheNames.filter(
+                name => name.startsWith("doubles-manager-")
+            );
+
+        if (appCacheNames.length === 0) {
+            alert("削除するアプリのキャッシュはありません。");
+            return;
+        }
+
+        const results = await Promise.all(
+            appCacheNames.map(
+                name => window.caches.delete(name)
+            )
+        );
+
+        if (results.every(Boolean)) {
+            alert("アプリのキャッシュを削除しました。");
+        } else {
+            alert("一部のアプリキャッシュを削除できませんでした。");
+        }
+    } catch (error) {
+        console.error(error);
+        alert("キャッシュの削除に失敗しました。");
+    } finally {
+        if (button) {
+            button.disabled = false;
+        }
+    }
+
+}
+
 // ======================================
 // 入力取得
 // ======================================
@@ -2472,6 +2587,10 @@ function renderCourts() {
 
             card.className =
                 "court-card";
+
+            if (court.status === "finished") {
+                card.classList.add("finished");
+            }
 
             const teamA =
                 (court.teamA || [])
