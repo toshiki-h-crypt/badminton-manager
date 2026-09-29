@@ -27,6 +27,8 @@
 
 <body>
 
+<div class="sticky-header">
+
 <header class="app-header">
 
     <h1>
@@ -63,6 +65,8 @@
 
 </nav>
 
+</div>
+
 <main>
 
     <!-- ========================= -->
@@ -90,9 +94,20 @@
                     placeholder="人数">
 
                 <button
-                    id="addNumberBtn">
+                    id="addNumberBtn"
+                    class="add-number-btn"
+                    type="button">
 
-                    人数登録
+                    <span class="add-number-icon" aria-hidden="true">
+                        <span class="person person-1"></span>
+                        <span class="person person-2"></span>
+                        <span class="person person-3"></span>
+                        <span class="add-number-body"></span>
+                    </span>
+
+                    <span class="add-number-label">
+                        人数追加
+                    </span>
 
                 </button>
 
@@ -108,9 +123,20 @@
                 placeholder="改行・スペース・カンマ区切りで複数登録可能"></textarea>
 
             <button
-                id="addNameBtn">
+                id="addNameBtn"
+                class="add-name-btn"
+                type="button">
 
-                参加者追加
+                <span class="add-name-icon" aria-hidden="true">
+                    <span class="pen-body"></span>
+                    <span class="pen-tip"></span>
+                    <span class="person person-1"></span>
+                    <span class="person person-2"></span>
+                </span>
+
+                <span class="add-name-label">
+                    名前で追加
+                </span>
 
             </button>
 
@@ -140,8 +166,16 @@
 
             </div>
 
-            <button id="toggleParticipantBtn">
-                ▼参加者表示
+            <button
+                id="toggleParticipantBtn"
+                class="toggle-switch"
+                type="button"
+                aria-pressed="false">
+
+                <span class="toggle-label toggle-label-left">参加者</span>
+                <span class="toggle-label toggle-label-right">表示</span>
+                <span class="toggle-knob"></span>
+
             </button>
 
             <div id="participantListContainer">
@@ -169,9 +203,20 @@
 
             <button
                 id="deleteAllBtn"
-                class="danger">
+                class="delete-all-btn"
+                type="button">
 
-                参加者一括削除
+                <span class="delete-all-icon" aria-hidden="true">
+                    <span class="trash-lid"></span>
+                    <span class="trash-body"></span>
+                    <span class="trash-line trash-line-1"></span>
+                    <span class="trash-line trash-line-2"></span>
+                    <span class="trash-line trash-line-3"></span>
+                </span>
+
+                <span class="delete-all-label">
+                    参加者一括削除
+                </span>
 
             </button>
 
@@ -240,9 +285,17 @@
 
             <button
                 id="startMatchBtn"
-                class="success">
+                class="start-match-btn"
+                type="button">
 
-                試合開始
+                <span class="start-match-icon" aria-hidden="true">
+                    <span class="racket racket-left"></span>
+                    <span class="racket racket-right"></span>
+                </span>
+
+                <span class="start-match-label">
+                    試合開始
+                </span>
 
             </button>
 
@@ -280,17 +333,33 @@
 
                 <button
                     id="finishAllBtn"
-                    class="info">
+                    class="finish-all-btn"
+                    type="button">
 
-                    試合終了
+                    <span class="finish-icon" aria-hidden="true">
+                        <span class="whistle-ring"></span>
+                        <span class="whistle-hole"></span>
+                    </span>
+
+                    <span class="finish-label">
+                        試合終了
+                    </span>
 
                 </button>
 
                 <button
                     id="nextAllBtn"
-                    class="warning">
+                    class="next-match-btn"
+                    type="button">
 
-                    次試合開始
+                    <span class="next-icon" aria-hidden="true">
+                        <span class="next-triangle next-triangle-left"></span>
+                        <span class="next-triangle next-triangle-right"></span>
+                    </span>
+
+                    <span class="next-match-label">
+                        次試合開始
+                    </span>
 
                 </button>
 
@@ -307,9 +376,23 @@
         <div id="courtContainer">
         </div>
 
-        <button id="toggleBenchBtn">
+        <button
+            id="toggleBenchBtn"
+            class="bench-toggle-switch"
+            type="button"
+            aria-pressed="false">
 
-            ▼待機選手表示
+            <span class="bench-toggle-left">
+                <span class="bench-list-icon" aria-hidden="true">
+                    <span class="bench-bar"></span>
+                    <span class="bench-bar"></span>
+                    <span class="bench-bar"></span>
+                </span>
+                <span class="bench-toggle-label">待機選手</span>
+            </span>
+
+            <span class="bench-toggle-right">表示</span>
+            <span class="bench-toggle-knob"></span>
 
         </button>
 
@@ -377,7 +460,7 @@
                 aria-expanded="false"
                 aria-controls="scoreSettingsContent">
 
-                設定を表示
+                ▼設定を表示
 
             </button>
 
@@ -387,30 +470,66 @@
 
                 <label>同一ペア減点</label>
                 <input id="pairPenalty" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>以前に同じペアだった回数に応じて減点します。値を上げると同じペアを避けやすくなり、下げると再登場しやすくなります。例：同じペアが過去3回なら、係数500で合計1500点の減点です。0にすると減点効果がなくなります。</p>
+                </details>
 
                 <label>同一対戦減点</label>
                 <input id="opponentPenalty" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>過去に対戦した相手との重複を減点します。値を上げると、対戦相手の組み合わせがより分散します。0にすると減点効果がなくなります。</p>
+                </details>
 
                 <label>出場均等加点</label>
                 <input id="playBalanceBonus" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>全参加者の平均より出場回数が少ない選手を候補に含めると加点します。値を上げると、出場が少ない選手を優先しやすくなります。</p>
+                </details>
 
                 <label>連続出場減点</label>
                 <input id="consecutivePlayPenalty" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>連続出場回数に応じて減点します。値を上げると連続で出ている選手が休みやすくなり、下げると連続出場を許容しやすくなります。0にすると減点効果がなくなります。</p>
+                </details>
 
                 <label>レベル一致加点</label>
                 <input id="levelBonus" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>レベル設定のオプションが「レベル均等」または「レベル統一」の場合にだけ有効です。「レベル均等」はペア内のレベル差が1以内なら加点します。「レベル統一」は両チームのレベル合計が近いほど加点し、大きく離れると減点します。係数を上げると、選んだ基準を強く反映します。</p>
+                </details>
 
                 <label>ミックス加点</label>
                 <input id="mixBonus" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>オプションが「ミックス優先」の場合だけ有効です。男女が分かる選手同士のペアを加点し、両チームがミックスなら追加加点します。係数を上げるほどミックス編成を優先します。</p>
+                </details>
 
                 <label>コート変更加点</label>
                 <input id="courtChangeBonus" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>前回と異なるコートになった選手を加点します。値を上げるとコート移動を促し、下げると前回と同じコートになりやすくなります。</p>
+                </details>
 
                 <label>出場回数差分の優先基準</label>
                 <input id="playCountGapThreshold" type="number" min="1" step="1">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>選択可能な選手内で、最多と最少の出場回数の差がこの値以上なら、最少出場の選手を優先候補にします。値を下げると早い段階から均等化し、上げると大きな差ができるまで優先しません。点数係数ではなく、選手選定のしきい値です。</p>
+                </details>
 
                 <label>候補探索回数</label>
                 <input id="searchCount" type="number">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>組み合わせ候補を生成・採点する回数です。増やすと良い候補を見つける可能性が上がりますが、生成に時間がかかります。上位10候補から選ぶ仕組みなので、増加による改善幅は一定ではありません。</p>
+                </details>
 
                 <button
                     id="resetScoreSettingBtn">

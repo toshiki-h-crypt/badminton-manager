@@ -1139,15 +1139,23 @@ function toggleParticipantList() {
         target.style.display ===
         "block";
 
-    target.style.display =
-        visible
-            ? "none"
-            : "block";
+    const nextVisible = !visible;
 
-    button.textContent =
-        visible
-            ? "▼参加者表示"
-            : "▲参加者非表示";
+    target.style.display =
+        nextVisible
+            ? "block"
+            : "none";
+
+    button.setAttribute(
+        "aria-pressed",
+        String(nextVisible)
+    );
+
+    button.querySelector(".toggle-label-left").textContent =
+        nextVisible ? "参加者" : "参加者";
+
+    button.querySelector(".toggle-label-right").textContent =
+        nextVisible ? "非表示" : "表示";
 
 }
 
@@ -1944,17 +1952,19 @@ function toggleBenchPlayers() {
     const visible =
         container.style.display === "block";
 
+    const nextVisible = !visible;
+
     container.style.display =
-        visible
-            ? "none"
-            : "block";
+        nextVisible
+            ? "block"
+            : "none";
 
-    button.textContent =
-        visible
-            ? "▼待機選手表示"
-            : "▲待機選手非表示";
+    button.setAttribute(
+        "aria-pressed",
+        String(nextVisible)
+    );
 
-    if (!visible) {
+    if (!nextVisible) {
 
         renderBenchPlayers();
 
@@ -2635,13 +2645,19 @@ function renderCourts() {
                     ?
 
                     `<button
+                        class="finish-court-btn"
                         onclick="finishCourt(${index})">
-                        試合終了
+                        <span class="finish-icon" aria-hidden="true">
+                            <span class="whistle-ring"></span>
+                            <span class="whistle-hole"></span>
+                        </span>
+                        <span class="finish-label">試合終了</span>
                     </button>`
 
                     :
 
                     `<button
+                        class="next-court-btn"
                         ${
                             appData.matchTarget -
                                 getCompletedMatchTotal() -
@@ -2655,7 +2671,11 @@ function renderCourts() {
                                 : ""
                         }
                         onclick="startNextCourtMatch(${index})">
-                        次試合開始
+                        <span class="next-icon" aria-hidden="true">
+                            <span class="next-triangle next-triangle-left"></span>
+                            <span class="next-triangle next-triangle-right"></span>
+                        </span>
+                        <span class="next-match-label">次試合開始</span>
                     </button>`
                 }
 
