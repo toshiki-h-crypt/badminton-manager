@@ -98,13 +98,6 @@
                     class="add-number-btn"
                     type="button">
 
-                    <span class="add-number-icon" aria-hidden="true">
-                        <span class="person person-1"></span>
-                        <span class="person person-2"></span>
-                        <span class="person person-3"></span>
-                        <span class="add-number-body"></span>
-                    </span>
-
                     <span class="add-number-label">
                         人数追加
                     </span>
@@ -126,13 +119,6 @@
                 id="addNameBtn"
                 class="add-name-btn"
                 type="button">
-
-                <span class="add-name-icon" aria-hidden="true">
-                    <span class="pen-body"></span>
-                    <span class="pen-tip"></span>
-                    <span class="person person-1"></span>
-                    <span class="person person-2"></span>
-                </span>
 
                 <span class="add-name-label">
                     名前で追加
@@ -168,13 +154,15 @@
 
             <button
                 id="toggleParticipantBtn"
-                class="toggle-switch"
+                class="visibility-toggle"
                 type="button"
                 aria-pressed="false">
 
-                <span class="toggle-label toggle-label-left">参加者</span>
-                <span class="toggle-label toggle-label-right">表示</span>
-                <span class="toggle-knob"></span>
+                <span class="visibility-toggle-title">参加者</span>
+                <span class="visibility-toggle-options">
+                    <span class="visibility-option visibility-option-show">表示</span>
+                    <span class="visibility-option visibility-option-hide">非表示</span>
+                </span>
 
             </button>
 
@@ -205,14 +193,6 @@
                 id="deleteAllBtn"
                 class="delete-all-btn"
                 type="button">
-
-                <span class="delete-all-icon" aria-hidden="true">
-                    <span class="trash-lid"></span>
-                    <span class="trash-body"></span>
-                    <span class="trash-line trash-line-1"></span>
-                    <span class="trash-line trash-line-2"></span>
-                    <span class="trash-line trash-line-3"></span>
-                </span>
 
                 <span class="delete-all-label">
                     参加者一括削除
@@ -336,11 +316,6 @@
                     class="finish-all-btn"
                     type="button">
 
-                    <span class="finish-icon" aria-hidden="true">
-                        <span class="whistle-ring"></span>
-                        <span class="whistle-hole"></span>
-                    </span>
-
                     <span class="finish-label">
                         試合終了
                     </span>
@@ -351,11 +326,6 @@
                     id="nextAllBtn"
                     class="next-match-btn"
                     type="button">
-
-                    <span class="next-icon" aria-hidden="true">
-                        <span class="next-triangle next-triangle-left"></span>
-                        <span class="next-triangle next-triangle-right"></span>
-                    </span>
 
                     <span class="next-match-label">
                         次試合開始
@@ -378,21 +348,15 @@
 
         <button
             id="toggleBenchBtn"
-            class="bench-toggle-switch"
+            class="visibility-toggle"
             type="button"
             aria-pressed="false">
 
-            <span class="bench-toggle-left">
-                <span class="bench-list-icon" aria-hidden="true">
-                    <span class="bench-bar"></span>
-                    <span class="bench-bar"></span>
-                    <span class="bench-bar"></span>
-                </span>
-                <span class="bench-toggle-label">待機選手</span>
+            <span class="visibility-toggle-title">待機選手</span>
+            <span class="visibility-toggle-options">
+                <span class="visibility-option visibility-option-show">表示</span>
+                <span class="visibility-option visibility-option-hide">非表示</span>
             </span>
-
-            <span class="bench-toggle-right">表示</span>
-            <span class="bench-toggle-knob"></span>
 
         </button>
 
@@ -429,11 +393,6 @@
         class="tab-content">
 
         <div class="card">
-
-            <h2>データ管理</h2>
-
-            <label>
-                自動保存
             </label>
 
             <select id="autoSave">

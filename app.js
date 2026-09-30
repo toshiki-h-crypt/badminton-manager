@@ -1151,12 +1151,6 @@ function toggleParticipantList() {
         String(nextVisible)
     );
 
-    button.querySelector(".toggle-label-left").textContent =
-        nextVisible ? "参加者" : "参加者";
-
-    button.querySelector(".toggle-label-right").textContent =
-        nextVisible ? "非表示" : "表示";
-
 }
 
 // ======================================
@@ -1964,7 +1958,7 @@ function toggleBenchPlayers() {
         String(nextVisible)
     );
 
-    if (!nextVisible) {
+    if (nextVisible) {
 
         renderBenchPlayers();
 
@@ -2647,10 +2641,6 @@ function renderCourts() {
                     `<button
                         class="finish-court-btn"
                         onclick="finishCourt(${index})">
-                        <span class="finish-icon" aria-hidden="true">
-                            <span class="whistle-ring"></span>
-                            <span class="whistle-hole"></span>
-                        </span>
                         <span class="finish-label">試合終了</span>
                     </button>`
 
@@ -2671,10 +2661,6 @@ function renderCourts() {
                                 : ""
                         }
                         onclick="startNextCourtMatch(${index})">
-                        <span class="next-icon" aria-hidden="true">
-                            <span class="next-triangle next-triangle-left"></span>
-                            <span class="next-triangle next-triangle-right"></span>
-                        </span>
                         <span class="next-match-label">次試合開始</span>
                     </button>`
                 }
