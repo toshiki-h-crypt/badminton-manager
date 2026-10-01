@@ -297,9 +297,9 @@ function bindSettingEvents() {
 
     if (toggleParticipantBtn) {
 
-        toggleParticipantBtn.addEventListener(
-            "click",
-            toggleParticipantList
+        bindVisibilityOptions(
+            toggleParticipantBtn,
+            setParticipantListVisibility
         );
 
     }
@@ -347,9 +347,9 @@ function bindMatchEvents() {
 
     if (toggleBenchBtn) {
 
-        toggleBenchBtn.addEventListener(
-            "click",
-            toggleBenchPlayers
+        bindVisibilityOptions(
+            toggleBenchBtn,
+            setBenchVisibility
         );
 
     }
@@ -1123,7 +1123,34 @@ function updateCourtOptions() {
 // 表示／非表示
 // ======================================
 
-function toggleParticipantList() {
+function bindVisibilityOptions(toggle, onChange) {
+
+    toggle.querySelectorAll("[data-visibility]")
+        .forEach(option => {
+            option.addEventListener(
+                "click",
+                () => onChange(option.dataset.visibility === "show")
+            );
+        });
+
+}
+
+function updateVisibilityToggle(toggle, isVisible) {
+
+    toggle.querySelectorAll("[data-visibility]")
+        .forEach(option => {
+            option.setAttribute(
+                "aria-pressed",
+                String(
+                    option.dataset.visibility ===
+                    (isVisible ? "show" : "hide")
+                )
+            );
+        });
+
+}
+
+function setParticipantListVisibility(isVisible) {
 
     const target =
         document.getElementById(
@@ -1135,21 +1162,12 @@ function toggleParticipantList() {
             "toggleParticipantBtn"
         );
 
-    const visible =
-        target.style.display ===
-        "block";
-
-    const nextVisible = !visible;
-
     target.style.display =
-        nextVisible
+        isVisible
             ? "block"
             : "none";
 
-    button.setAttribute(
-        "aria-pressed",
-        String(nextVisible)
-    );
+    updateVisibilityToggle(button, isVisible);
 
 }
 
@@ -1931,7 +1949,7 @@ function getBenchPlayers() {
 // 待機選手表示
 // ======================================
 
-function toggleBenchPlayers() {
+function setBenchVisibility(isVisible) {
 
     const container =
         document.getElementById(
@@ -1943,22 +1961,14 @@ function toggleBenchPlayers() {
             "toggleBenchBtn"
         );
 
-    const visible =
-        container.style.display === "block";
-
-    const nextVisible = !visible;
-
     container.style.display =
-        nextVisible
+        isVisible
             ? "block"
             : "none";
 
-    button.setAttribute(
-        "aria-pressed",
-        String(nextVisible)
-    );
+    updateVisibilityToggle(button, isVisible);
 
-    if (nextVisible) {
+    if (isVisible) {
 
         renderBenchPlayers();
 

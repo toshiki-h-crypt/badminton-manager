@@ -148,7 +148,7 @@ textarea{
 }
 
 .row #addNumberBtn{
-    width:clamp(300px, 60vw, 820px);
+    width:clamp(100px, 10vw, 200px);
     flex:1 1 auto;
     display:flex;
     align-items:center;
@@ -159,7 +159,7 @@ textarea{
     border-radius:999px;
     box-shadow:inset 0 -6px 0 rgba(0,0,0,0.12), 0 6px 12px rgba(46,125,50,0.18);
     padding:18px 24px;
-    min-height:110px;
+    min-height:40px;
     line-height:1;
     margin-top:0;
 }
@@ -184,8 +184,8 @@ textarea{
     border-radius:999px;
     box-shadow:inset 0 -6px 0 rgba(0,0,0,0.12), 0 6px 12px rgba(117,76,0,0.18);
     padding:18px 24px;
-    min-height:110px;
-    margin-top:10px;
+    min-height:40px;
+    margin:10px auto 0 auto;
     line-height:1;
 }
 
@@ -224,7 +224,7 @@ button{
     border-radius:999px;
     box-shadow:inset 0 -6px 0 rgba(0,0,0,0.12), 0 6px 12px rgba(0,76,184,0.2);
     padding:18px 24px;
-    min-height:110px;
+    min-height:40px;
     line-height:1;
     font-weight:900;
     color:#fff;
@@ -247,7 +247,7 @@ button{
     border-radius:999px;
     box-shadow:inset 0 -6px 0 rgba(0,0,0,0.12), 0 6px 12px rgba(155,88,0,0.18);
     padding:18px 24px;
-    min-height:110px;
+    min-height:40px;
     line-height:1;
     font-weight:900;
     color:#fff;
@@ -290,8 +290,8 @@ button{
     border-radius:999px;
     box-shadow:inset 0 -6px 0 rgba(0,0,0,0.12), 0 6px 12px rgba(0,80,0,0.18);
     padding:18px 24px;
-    min-height:110px;
-    margin-top:10px;
+    min-height:40px;
+    margin:10px auto 0 auto;
     line-height:1;
 }
 
@@ -313,8 +313,8 @@ button{
     border-radius:999px;
     box-shadow:inset 0 -6px 0 rgba(0,0,0,0.12), 0 6px 12px rgba(168,0,0,0.18);
     padding:18px 24px;
-    min-height:110px;
-    margin-top:10px;
+    min-height:40px;
+    margin:10px auto 0 auto;
     line-height:1;
 }
 
@@ -331,7 +331,7 @@ button{
     position:relative;
     width:100%;
     max-width:900px;
-    min-height:100px;
+    min-height:40px;
     border:none;
     border-radius:999px;
     background:#e8e8e8;
@@ -345,7 +345,7 @@ button{
     cursor:pointer;
     font-weight:900;
     color:#111827;
-    margin-top:10px;
+    margin:10px auto 0 auto;
 }
 
 .visibility-toggle-title{
@@ -365,6 +365,7 @@ button{
 }
 
 .visibility-option{
+    width:100%;
     min-width:0;
     display:flex;
     align-items:center;
@@ -372,17 +373,23 @@ button{
     padding:8px 10px;
     border:2px solid transparent;
     border-radius:999px;
+    margin:0;
+    background:transparent;
+    color:inherit;
+    box-shadow:none;
+    cursor:pointer;
     font-size:clamp(22px, 3vw, 38px);
+    font-weight:900;
     line-height:1;
     white-space:nowrap;
 }
 
-.visibility-toggle[aria-pressed="false"] .visibility-option-show{
+.visibility-option-show[aria-pressed="true"]{
     background:#b5e6a5;
     border-color:#151515;
 }
 
-.visibility-toggle[aria-pressed="true"] .visibility-option-hide{
+.visibility-option-hide[aria-pressed="true"]{
     background:#ffc400;
     border-color:#151515;
 }

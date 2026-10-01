@@ -152,19 +152,19 @@
 
             </div>
 
-            <button
+            <div
                 id="toggleParticipantBtn"
                 class="visibility-toggle"
-                type="button"
-                aria-pressed="false">
+                role="group"
+                aria-label="参加者一覧の表示設定">
 
                 <span class="visibility-toggle-title">参加者</span>
                 <span class="visibility-toggle-options">
-                    <span class="visibility-option visibility-option-show">表示</span>
-                    <span class="visibility-option visibility-option-hide">非表示</span>
+                    <button class="visibility-option visibility-option-show" type="button" data-visibility="show" aria-pressed="false">表示</button>
+                    <button class="visibility-option visibility-option-hide" type="button" data-visibility="hide" aria-pressed="true">非表示</button>
                 </span>
 
-            </button>
+            </div>
 
             <div id="participantListContainer">
 
@@ -346,19 +346,19 @@
         <div id="courtContainer">
         </div>
 
-        <button
+        <div
             id="toggleBenchBtn"
             class="visibility-toggle"
-            type="button"
-            aria-pressed="false">
+            role="group"
+            aria-label="待機選手一覧の表示設定">
 
             <span class="visibility-toggle-title">待機選手</span>
             <span class="visibility-toggle-options">
-                <span class="visibility-option visibility-option-show">表示</span>
-                <span class="visibility-option visibility-option-hide">非表示</span>
+                <button class="visibility-option visibility-option-show" type="button" data-visibility="show" aria-pressed="false">表示</button>
+                <button class="visibility-option visibility-option-hide" type="button" data-visibility="hide" aria-pressed="true">非表示</button>
             </span>
 
-        </button>
+        </div>
 
         <div id="benchContainer">
 
