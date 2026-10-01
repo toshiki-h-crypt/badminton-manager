@@ -30,6 +30,8 @@ function createDefaultData() {
 
             playMode: "batch",
 
+            voiceAnnouncements: false,
+
             optionMode: "-",
 
             autoSave: true,
@@ -295,6 +297,11 @@ function bindSettingEvents() {
             "startMatchBtn"
         );
 
+    const voiceAnnouncementsSelect =
+        document.getElementById(
+            "voiceAnnouncements"
+        );
+
     if (addNumberBtn) {
 
         addNumberBtn.addEventListener(
@@ -336,6 +343,37 @@ function bindSettingEvents() {
         startMatchBtn.addEventListener(
             "click",
             startMatch
+        );
+
+    }
+
+    if (voiceAnnouncementsSelect) {
+
+        voiceAnnouncementsSelect.addEventListener(
+            "change",
+            function() {
+                const enabled = this.value === "on";
+
+                if (
+                    enabled &&
+                    (
+                        !("speechSynthesis" in window) ||
+                        typeof SpeechSynthesisUtterance === "undefined"
+                    )
+                ) {
+                    this.value = "off";
+                    alert("このブラウザーは音声読み上げに対応していません。");
+                    return;
+                }
+
+                appData.settings.voiceAnnouncements = enabled;
+
+                if (!enabled && "speechSynthesis" in window) {
+                    window.speechSynthesis.cancel();
+                }
+
+                saveData();
+            }
         );
 
     }
@@ -1277,6 +1315,11 @@ function restoreSettings() {
     );
 
     setValue(
+        "voiceAnnouncements",
+        s.voiceAnnouncements ? "on" : "off"
+    );
+
+    setValue(
         "matchPlayMode",
         s.playMode
     );
@@ -1477,6 +1520,12 @@ function updateSettingsFromScreen() {
             "playMode",
             "batch"
         );
+
+    appData.settings.voiceAnnouncements =
+        getValue(
+            "voiceAnnouncements",
+            "off"
+        ) === "on";
 
     appData.settings.optionMode =
         getValue(
@@ -3436,6 +3485,8 @@ function applyCandidate(candidate) {
 
     updateMatchHistories();
 
+    announceCourtMatches(appData.courts);
+
     renderCourts();
 
     updateMatchInfo();
@@ -3473,6 +3524,79 @@ function generateRound(
     return applyCandidate(
         candidate
     );
+
+}
+
+function announceCourtMatches(courts) {
+
+    if (
+        !appData.settings.voiceAnnouncements ||
+        !("speechSynthesis" in window) ||
+        typeof SpeechSynthesisUtterance === "undefined"
+    ) {
+        return;
+    }
+
+    const playingCourts =
+        courts.filter(court => court.status === "playing");
+
+    if (playingCourts.length === 0) {
+        return;
+    }
+
+    const formatPlayerName = player => {
+        const name = String(player.name).trim();
+
+        if (/^\d+$/.test(name)) {
+            const number = Number(name);
+
+            if (number >= 1 && number <= 99) {
+                const readings = [
+                    "",
+                    "イチ",
+                    "ニ",
+                    "サン",
+                    "ヨン",
+                    "ゴ",
+                    "ロク",
+                    "ナナ",
+                    "ハチ",
+                    "キュウ"
+                ];
+                const tens = Math.floor(number / 10);
+                const ones = number % 10;
+                const tensReading =
+                    tens === 0
+                        ? ""
+                        : tens === 1
+                            ? "ジュウ"
+                            : `${readings[tens]}ジュウ`;
+
+                return `${tensReading}${readings[ones]}バン`;
+            }
+
+            return `No.${name}`;
+        }
+
+        return name.endsWith("さん")
+            ? name
+            : `${name}さん`;
+    };
+
+    playingCourts.forEach(court => {
+        const announcement =
+            `第${court.courtNo}コート、` +
+            `${formatPlayerName(court.teamA[0])}・` +
+            `${formatPlayerName(court.teamA[1])}対、` +
+            `${formatPlayerName(court.teamB[0])}・` +
+            `${formatPlayerName(court.teamB[1])}`;
+
+        const utterance =
+            new SpeechSynthesisUtterance(announcement);
+
+        utterance.lang = "ja-JP";
+        window.speechSynthesis.speak(utterance);
+    });
 
 }
 
@@ -3687,6 +3811,10 @@ function createNextCourtRound(
     updateCourtHistory(
         appData.courts[courtIndex]
     );
+
+    announceCourtMatches([
+        appData.courts[courtIndex]
+    ]);
 
     renderCourts();
 
