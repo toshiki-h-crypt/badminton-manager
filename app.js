@@ -14,6 +14,8 @@ let appData = createDefaultData();
 
 let lastMatchAnnouncements = [];
 
+let lastAnnouncementMode = "batch";
+
 // ======================================
 // デフォルトデータ
 // ======================================
@@ -3599,13 +3601,21 @@ function announceCourtMatches(courts) {
             `${formatPlayerName(court.teamB[1])}`
     );
 
+    lastAnnouncementMode = appData.settings.playMode;
+
     if (appData.settings.voiceAnnouncements) {
-        speakMatchAnnouncements(lastMatchAnnouncements);
+        speakMatchAnnouncements(
+            lastMatchAnnouncements,
+            lastAnnouncementMode === "batch"
+        );
     }
 
 }
 
-function speakMatchAnnouncements(announcements) {
+function speakMatchAnnouncements(
+    announcements,
+    repeatAfterAll = false
+) {
 
     if (
         !("speechSynthesis" in window) ||
@@ -3616,15 +3626,26 @@ function speakMatchAnnouncements(announcements) {
 
     window.speechSynthesis.cancel();
 
-    announcements.forEach(announcement => {
-        [announcement, "繰り返します", announcement]
-            .forEach(text => {
-                const utterance =
-                    new SpeechSynthesisUtterance(text);
+    const speechSequence = repeatAfterAll
+        ? [
+            ...announcements,
+            "繰り返します",
+            ...announcements
+        ]
+        : announcements.flatMap(
+            announcement => [
+                announcement,
+                "繰り返します",
+                announcement
+            ]
+        );
 
-                utterance.lang = "ja-JP";
-                window.speechSynthesis.speak(utterance);
-            });
+    speechSequence.forEach(text => {
+        const utterance =
+            new SpeechSynthesisUtterance(text);
+
+        utterance.lang = "ja-JP";
+        window.speechSynthesis.speak(utterance);
     });
 
     return true;
@@ -3638,7 +3659,10 @@ function recallLastAnnouncements() {
         return;
     }
 
-    if (!speakMatchAnnouncements(lastMatchAnnouncements)) {
+    if (!speakMatchAnnouncements(
+        lastMatchAnnouncements,
+        lastAnnouncementMode === "batch"
+    )) {
         alert("このブラウザーは音声読み上げに対応していません。");
     }
 
