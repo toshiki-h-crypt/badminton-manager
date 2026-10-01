@@ -12,6 +12,8 @@ const STORAGE_KEY = "doublesManagerData";
 
 let appData = createDefaultData();
 
+let lastMatchAnnouncements = [];
+
 // ======================================
 // デフォルトデータ
 // ======================================
@@ -401,6 +403,11 @@ function bindMatchEvents() {
             "nextAllBtn"
         );
 
+    const recallAnnouncementBtn =
+        document.getElementById(
+            "recallAnnouncementBtn"
+        );
+
     if (toggleBenchBtn) {
 
         bindVisibilityOptions(
@@ -424,6 +431,15 @@ function bindMatchEvents() {
         nextAllBtn.addEventListener(
             "click",
             startNextRound
+        );
+
+    }
+
+    if (recallAnnouncementBtn) {
+
+        recallAnnouncementBtn.addEventListener(
+            "click",
+            recallLastAnnouncements
         );
 
     }
@@ -3529,14 +3545,6 @@ function generateRound(
 
 function announceCourtMatches(courts) {
 
-    if (
-        !appData.settings.voiceAnnouncements ||
-        !("speechSynthesis" in window) ||
-        typeof SpeechSynthesisUtterance === "undefined"
-    ) {
-        return;
-    }
-
     const playingCourts =
         courts.filter(court => court.status === "playing");
 
@@ -3583,20 +3591,56 @@ function announceCourtMatches(courts) {
             : `${name}さん`;
     };
 
-    playingCourts.forEach(court => {
-        const announcement =
+    lastMatchAnnouncements = playingCourts.map(court =>
             `第${court.courtNo}コート、` +
             `${formatPlayerName(court.teamA[0])}・` +
             `${formatPlayerName(court.teamA[1])}対、` +
             `${formatPlayerName(court.teamB[0])}・` +
-            `${formatPlayerName(court.teamB[1])}`;
+            `${formatPlayerName(court.teamB[1])}`
+    );
 
-        const utterance =
-            new SpeechSynthesisUtterance(announcement);
+    if (appData.settings.voiceAnnouncements) {
+        speakMatchAnnouncements(lastMatchAnnouncements);
+    }
 
-        utterance.lang = "ja-JP";
-        window.speechSynthesis.speak(utterance);
+}
+
+function speakMatchAnnouncements(announcements) {
+
+    if (
+        !("speechSynthesis" in window) ||
+        typeof SpeechSynthesisUtterance === "undefined"
+    ) {
+        return false;
+    }
+
+    window.speechSynthesis.cancel();
+
+    announcements.forEach(announcement => {
+        [announcement, "繰り返します", announcement]
+            .forEach(text => {
+                const utterance =
+                    new SpeechSynthesisUtterance(text);
+
+                utterance.lang = "ja-JP";
+                window.speechSynthesis.speak(utterance);
+            });
     });
+
+    return true;
+
+}
+
+function recallLastAnnouncements() {
+
+    if (lastMatchAnnouncements.length === 0) {
+        alert("再コールする対戦カードがありません。");
+        return;
+    }
+
+    if (!speakMatchAnnouncements(lastMatchAnnouncements)) {
+        alert("このブラウザーは音声読み上げに対応していません。");
+    }
 
 }
 
