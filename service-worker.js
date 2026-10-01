@@ -1,5 +1,5 @@
 const CACHE_NAME =
-"doubles-manager-v1";
+"doubles-manager-v2";
 
 const urlsToCache = [
 
