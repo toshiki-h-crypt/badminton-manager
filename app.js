@@ -917,6 +917,8 @@ function renderParticipantTable() {
 
     bindParticipantTableEvents();
 
+    refreshBenchPlayersIfVisible();
+
 }
 
 // ======================================
@@ -1061,6 +1063,8 @@ function updatePlayerName(
     appData.participants[index]
         .name = value.trim();
 
+    refreshBenchPlayersIfVisible();
+
     saveData();
 
 }
@@ -1084,6 +1088,7 @@ function updatePlayerGender(
         .gender = gender;
 
     updateParticipantSummary();
+    refreshBenchPlayersIfVisible();
 
     saveData();
 
@@ -1101,6 +1106,9 @@ function updatePlayerGroup(index, groupName) {
     }
 
     player.group = groupName;
+
+    refreshBenchPlayersIfVisible();
+
     saveData();
 
 }
@@ -2176,6 +2184,17 @@ function getBenchPlayers() {
 
 }
 
+function refreshBenchPlayersIfVisible() {
+
+    const container =
+        document.getElementById("benchContainer");
+
+    if (container?.style.display === "block") {
+        renderBenchPlayers();
+    }
+
+}
+
 // ======================================
 // 待機選手表示
 // ======================================
@@ -2235,16 +2254,36 @@ function renderBenchPlayers() {
                     "tr"
                 );
 
+            const participantNumber =
+                appData.participants.indexOf(player) + 1;
+
+            const groupOptions =
+                getConfiguredGroupNames()
+                    .map(groupName => `
+                        <option value="${escapeHtml(groupName)}"
+                            ${player.group === groupName ? "selected" : ""}>
+                            ${escapeHtml(groupName)}
+                        </option>
+                    `)
+                    .join("");
+
             row.innerHTML = `
 
             <td>
-                ${index + 1}
+                ${participantNumber}
             </td>
 
             <td>
                 <input
                     value="${escapeHtml(player.name)}"
                     onchange="updateBenchName('${player.id}', this.value)">
+            </td>
+
+            <td>
+                <select
+                    onchange="updateBenchGroup('${player.id}', this.value)">
+                    ${groupOptions}
+                </select>
             </td>
 
             <td>
@@ -2257,12 +2296,30 @@ function renderBenchPlayers() {
             </td>
 
             <td>
+                <select
+                    onchange="updateBenchGender('${player.id}', this.value)">
+                    <option value="" ${player.gender === "" ? "selected" : ""}>未</option>
+                    <option value="男" ${player.gender === "男" ? "selected" : ""}>男</option>
+                    <option value="女" ${player.gender === "女" ? "selected" : ""}>女</option>
+                </select>
+            </td>
+
+            <td>
 
                 <input
                     type="checkbox"
                     ${player.forceRest ? "checked" : ""}
                     onchange="toggleForceRest('${player.id}', this.checked)">
 
+            </td>
+
+            <td>
+                <button
+                    type="button"
+                    class="delete-btn"
+                    onclick="removeBenchPlayer('${player.id}')">
+                    🗑
+                </button>
             </td>
 
             `;
@@ -2292,9 +2349,47 @@ function updateBenchName(
         return;
     }
 
-    player.name = value;
+    player.name = value.trim();
 
+    renderParticipantTable();
     saveData();
+
+}
+
+function updateBenchGroup(playerId, groupName) {
+
+    const index = appData.participants.findIndex(
+        player => String(player.id) === String(playerId)
+    );
+
+    if (index >= 0) {
+        updatePlayerGroup(index, groupName);
+    }
+
+}
+
+function updateBenchGender(playerId, gender) {
+
+    const index = appData.participants.findIndex(
+        player => String(player.id) === String(playerId)
+    );
+
+    if (index >= 0) {
+        updatePlayerGender(index, gender);
+        renderParticipantTable();
+    }
+
+}
+
+function removeBenchPlayer(playerId) {
+
+    const index = appData.participants.findIndex(
+        player => String(player.id) === String(playerId)
+    );
+
+    if (index >= 0) {
+        removeParticipant(index);
+    }
 
 }
 
@@ -2315,7 +2410,6 @@ function cycleBenchPlayerLevel(playerId) {
         : player.level + 1;
 
     renderParticipantTable();
-    renderBenchPlayers();
     saveData();
 
 }
