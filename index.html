@@ -175,6 +175,7 @@
                     <tr>
                         <th>No</th>
                         <th>名前</th>
+                        <th>グループ</th>
                         <th>レベル</th>
                         <th>性別</th>
                         <th>削除</th>
@@ -220,8 +221,8 @@
             <input
                 id="totalMatches"
                 type="number"
-                value="30"
-                min="1">
+                min="1"
+                placeholder="試合上限数の入力（空白可）">
 
             <label>
                 試合進行方式
@@ -240,22 +241,6 @@
             </select>
 
             <label>
-                音声呼び出し
-            </label>
-
-            <select id="voiceAnnouncements">
-
-                <option value="off">
-                    無効
-                </option>
-
-                <option value="on">
-                    有効
-                </option>
-
-            </select>
-
-            <label>
                 オプション設定
             </label>
 
@@ -269,12 +254,40 @@
                     レベル均等
                 </option>
 
-                <option value="levelUnified">
-                    レベル統一
-                </option>
-
                 <option value="mix">
                     ミックス優先
+                </option>
+
+            </select>
+
+            <label>
+                グループ機能
+            </label>
+
+            <select id="groupMode">
+
+                <option value="off">
+                    無効
+                </option>
+
+                <option value="on">
+                    有効
+                </option>
+
+            </select>
+
+            <label>
+                音声呼び出し
+            </label>
+
+            <select id="voiceAnnouncements">
+
+                <option value="off">
+                    無効
+                </option>
+
+                <option value="on">
+                    有効
                 </option>
 
             </select>
@@ -486,7 +499,7 @@
                 <input id="levelBonus" type="number">
                 <details class="setting-help">
                     <summary>説明</summary>
-                    <p>レベル設定のオプションが「レベル均等」または「レベル統一」の場合にだけ有効です。「レベル均等」はペア内のレベル差が1以内なら加点します。「レベル統一」は両チームのレベル合計が近いほど加点し、大きく離れると減点します。係数を上げると、選んだ基準を強く反映します。</p>
+                    <p>オプション設定が「レベル均等」の場合だけ有効です。各ペア内のレベル差が1以内なら加点します。係数を上げると、ペア内のレベル差を小さくする基準を強く反映します。</p>
                 </details>
 
                 <label>ミックス加点</label>
@@ -542,6 +555,21 @@
 
         </div>
 
+        <div class="card">
+
+            <h2>グループ機能</h2>
+
+            <label for="groupNames">
+                グルーピング名称設定（初期設定：A,B,C,D,E）
+            </label>
+
+            <textarea
+                id="groupNames"
+                rows="2"
+                placeholder="改行・スペース・カンマでグループ名を複数設定できます。空欄の場合はA,B,C,D,Eを使用します。"></textarea>
+
+        </div>
+
         <button
             id="darkModeBtn"
             class="dark">
@@ -567,6 +595,33 @@
         </button>
 
     </section>
+
+    <dialog
+        id="appMessageDialog"
+        class="app-message-dialog"
+        aria-labelledby="appMessageText">
+
+        <form method="dialog">
+            <p id="appMessageText"></p>
+            <div class="app-message-actions">
+                <button
+                    id="appMessageCancelBtn"
+                    class="app-message-cancel hidden"
+                    type="submit"
+                    value="cancel">
+                    キャンセル
+                </button>
+                <button
+                    id="appMessageConfirmBtn"
+                    class="app-message-ok"
+                    type="submit"
+                    value="confirm">
+                    OK
+                </button>
+            </div>
+        </form>
+
+    </dialog>
 
 </main>
 

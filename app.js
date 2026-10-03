@@ -5,6 +5,7 @@
 // ======================================
 
 const STORAGE_KEY = "doublesManagerData";
+const DEFAULT_GROUP_NAMES = ["A", "B", "C", "D", "E"];
 
 // ======================================
 // アプリデータ
@@ -30,13 +31,17 @@ function createDefaultData() {
 
             courtCount: 1,
 
-            totalMatches: 30,
+            totalMatches: null,
 
             playMode: "batch",
 
             voiceAnnouncements: false,
 
             optionMode: "-",
+
+            groupMode: false,
+
+            groupNames: [...DEFAULT_GROUP_NAMES],
 
             autoSave: true,
 
@@ -91,6 +96,34 @@ function createDefaultData() {
         roundHistory: []
 
     };
+
+}
+
+function normalizeGroupNames(value) {
+
+    const values = Array.isArray(value)
+        ? value
+        : String(value ?? "").split(/[\s,、，]+/);
+
+    const names = [
+        ...new Set(
+            values
+                .map(name => String(name).trim())
+                .filter(Boolean)
+        )
+    ];
+
+    return names.length > 0
+        ? names
+        : [...DEFAULT_GROUP_NAMES];
+
+}
+
+function getConfiguredGroupNames() {
+
+    return normalizeGroupNames(
+        appData.settings.groupNames
+    );
 
 }
 
@@ -366,7 +399,7 @@ function bindSettingEvents() {
                     )
                 ) {
                     this.value = "off";
-                    alert("このブラウザーは音声読み上げに対応していません。");
+                    showAppMessage("このブラウザーは音声読み上げに対応していません。");
                     return;
                 }
 
@@ -674,6 +707,8 @@ function addNumberPlayers() {
 
             gender: "",
 
+            group: getConfiguredGroupNames()[0],
+
             level: 2,
 
             playCount: 0,
@@ -740,6 +775,8 @@ function addNamePlayers() {
 
             gender: "",
 
+            group: getConfiguredGroupNames()[0],
+
             level: 2,
 
             playCount: 0,
@@ -797,6 +834,16 @@ function renderParticipantTable() {
                     "tr"
                 );
 
+            const groupOptions =
+                getConfiguredGroupNames()
+                    .map(groupName => `
+                        <option value="${escapeHtml(groupName)}"
+                            ${player.group === groupName ? "selected" : ""}>
+                            ${escapeHtml(groupName)}
+                        </option>
+                    `)
+                    .join("");
+
             row.innerHTML = `
 
                 <td>
@@ -808,6 +855,14 @@ function renderParticipantTable() {
                         value="${escapeHtml(player.name)}"
                         data-index="${index}"
                         class="player-name">
+                </td>
+
+                <td>
+                    <select
+                        class="group-select"
+                        data-index="${index}">
+                        ${groupOptions}
+                    </select>
                 </td>
 
                 <td>
@@ -922,6 +977,24 @@ function bindParticipantTableEvents() {
 
     document
         .querySelectorAll(
+            ".group-select"
+        )
+        .forEach(select => {
+
+            select.addEventListener(
+                "change",
+                function () {
+                    updatePlayerGroup(
+                        Number(this.dataset.index),
+                        this.value
+                    );
+                }
+            );
+
+        });
+
+    document
+        .querySelectorAll(
             ".level-btn"
         )
         .forEach(btn => {
@@ -1016,6 +1089,22 @@ function updatePlayerGender(
 
 }
 
+function updatePlayerGroup(index, groupName) {
+
+    const player = appData.participants[index];
+
+    if (
+        !player ||
+        !getConfiguredGroupNames().includes(groupName)
+    ) {
+        return;
+    }
+
+    player.group = groupName;
+    saveData();
+
+}
+
 // ======================================
 // レベル変更
 // ======================================
@@ -1070,12 +1159,12 @@ function removeParticipant(
 // 一括削除
 // ======================================
 
-function deleteAllParticipants() {
+async function deleteAllParticipants() {
 
-    const result =
-        confirm(
-            "参加者を全員削除しますか？"
-        );
+    const result = await showAppConfirm(
+        "参加者を全員削除しますか？",
+        "削除"
+    );
 
     if (!result) {
         return;
@@ -1324,12 +1413,27 @@ function restoreSettings() {
 
     setValue(
         "totalMatches",
-        s.totalMatches
+        s.totalMatches ?? ""
     );
 
     setValue(
         "playMode",
         s.playMode
+    );
+
+    setValue(
+        "optionMode",
+        s.optionMode
+    );
+
+    setValue(
+        "groupMode",
+        s.groupMode ? "on" : "off"
+    );
+
+    setValue(
+        "groupNames",
+        getConfiguredGroupNames().join(", ")
     );
 
     setValue(
@@ -1425,7 +1529,7 @@ function setValue(
 // 試合開始
 // ======================================
 
-function startMatch() {
+async function startMatch() {
 
     const playerCount =
         appData.participants.length;
@@ -1434,7 +1538,7 @@ function startMatch() {
         playerCount < 4
     ) {
 
-        alert(
+        showAppMessage(
             "参加人数が不足しています"
         );
 
@@ -1450,7 +1554,8 @@ function startMatch() {
 
     appData.matchTarget = appData.settings.totalMatches;
 
-    appData.matchTargetIncrement = appData.settings.totalMatches;
+    appData.matchTargetIncrement =
+        appData.settings.totalMatches ?? 0;
 
     appData.continuationPromptHandledForTarget = 0;
 
@@ -1491,7 +1596,7 @@ function startMatch() {
     );
 
     const matchesToStart =
-        ensureMatchCapacity(
+        await ensureMatchCapacity(
             appData.settings.courtCount
         );
 
@@ -1520,12 +1625,16 @@ function updateSettingsFromScreen() {
         )
     );
 
-    const totalMatches = Math.max(
-        1,
-        Math.floor(
-            Number(getValue("totalMatches", 30)) || 30
-        )
-    );
+    const totalMatchesValue =
+        getValue("totalMatches").trim();
+
+    const totalMatches =
+        totalMatchesValue === ""
+            ? null
+            : Math.max(
+                1,
+                Math.floor(Number(totalMatchesValue) || 1)
+            );
 
     appData.settings.courtCount =
         court;
@@ -1550,6 +1659,12 @@ function updateSettingsFromScreen() {
             "optionMode",
             "-"
         );
+
+    appData.settings.groupMode =
+        getValue(
+            "groupMode",
+            "off"
+        ) === "on";
 
 }
 
@@ -1712,16 +1827,41 @@ function saveAdminSettings() {
 
 }
 
+function saveGroupNamesFromScreen() {
+
+    const groupNames =
+        normalizeGroupNames(
+            getValue("groupNames")
+        );
+
+    appData.settings.groupNames = groupNames;
+
+    appData.participants.forEach(player => {
+        if (!groupNames.includes(player.group)) {
+            player.group = groupNames[0];
+        }
+    });
+
+    setValue(
+        "groupNames",
+        groupNames.join(", ")
+    );
+
+    renderParticipantTable();
+    saveData();
+
+}
+
 // ======================================
 // スコア設定初期化
 // ======================================
 
-function resetScoreSettings() {
+async function resetScoreSettings() {
 
-    const result =
-        confirm(
-            "スコア設定を初期化しますか？"
-        );
+    const result = await showAppConfirm(
+        "スコア設定を初期化しますか？",
+        "初期化"
+    );
 
     if (!result) {
         return;
@@ -1782,10 +1922,9 @@ function applyDarkMode() {
 // データ初期化
 // ======================================
 
-function resetApplication() {
+async function resetApplication() {
 
-    const result =
-        confirm(
+    const result = await showAppConfirm(
 `アプリデータを初期化しますか？
 
 ・参加者
@@ -1793,7 +1932,8 @@ function resetApplication() {
 ・試合履歴
 ・保存データ
 
-すべて削除されます。`
+すべて削除されます。`,
+    "初期化"
         );
 
     if (!result) {
@@ -1813,8 +1953,9 @@ function resetApplication() {
 
 async function clearAppCache() {
 
-    const confirmed = confirm(
-        "アプリのキャッシュを削除しますか？\n参加者や試合の保存データは削除されません。"
+    const confirmed = await showAppConfirm(
+        "アプリのキャッシュを削除しますか？\n参加者や試合の保存データは削除されません。",
+        "削除"
     );
 
     if (!confirmed) {
@@ -1822,7 +1963,7 @@ async function clearAppCache() {
     }
 
     if (!("caches" in window)) {
-        alert("このブラウザではアプリのキャッシュを削除できません。");
+        await showAppMessage("このブラウザではアプリのキャッシュを削除できません。");
         return;
     }
 
@@ -1843,7 +1984,7 @@ async function clearAppCache() {
             );
 
         if (appCacheNames.length === 0) {
-            alert("削除するアプリのキャッシュはありません。");
+            await showAppMessage("削除するアプリのキャッシュはありません。");
             return;
         }
 
@@ -1854,13 +1995,13 @@ async function clearAppCache() {
         );
 
         if (results.every(Boolean)) {
-            alert("アプリのキャッシュを削除しました。");
+            await showAppMessage("アプリのキャッシュを削除しました。");
         } else {
-            alert("一部のアプリキャッシュを削除できませんでした。");
+            await showAppMessage("一部のアプリキャッシュを削除できませんでした。");
         }
     } catch (error) {
         console.error(error);
-        alert("キャッシュの削除に失敗しました。");
+        await showAppMessage("キャッシュの削除に失敗しました。");
     } finally {
         if (button) {
             button.disabled = false;
@@ -1915,6 +2056,11 @@ function getNumber(
 document.addEventListener(
     "change",
     function(event){
+
+        if (event.target.id === "groupNames") {
+            saveGroupNamesFromScreen();
+            return;
+        }
 
         const adminIds = [
 
@@ -2102,7 +2248,12 @@ function renderBenchPlayers() {
             </td>
 
             <td>
-                ${getLevelStars(player.level)}
+                <button
+                    type="button"
+                    class="bench-level-btn"
+                    onclick="cycleBenchPlayerLevel('${player.id}')">
+                    ${getLevelStars(player.level)}
+                </button>
             </td>
 
             <td>
@@ -2143,6 +2294,28 @@ function updateBenchName(
 
     player.name = value;
 
+    saveData();
+
+}
+
+function cycleBenchPlayerLevel(playerId) {
+
+    const player =
+        appData.participants.find(
+            participant =>
+                String(participant.id) === String(playerId)
+        );
+
+    if (!player) {
+        return;
+    }
+
+    player.level = player.level >= 5
+        ? 1
+        : player.level + 1;
+
+    renderParticipantTable();
+    renderBenchPlayers();
     saveData();
 
 }
@@ -2244,7 +2417,7 @@ function getPriorityPlayers(players) {
 // 一括進行終了
 // ======================================
 
-function finishAllMatches() {
+async function finishAllMatches() {
 
     if (appData.settings.playMode !== "batch") {
         return;
@@ -2269,7 +2442,7 @@ function finishAllMatches() {
         incrementCompletedMatches(index);
     });
 
-    ensureMatchCapacity(0);
+    await ensureMatchCapacity(0);
 
     renderCourts();
     updateMatchInfo();
@@ -2280,7 +2453,7 @@ function finishAllMatches() {
 // 一括進行 次試合
 // ======================================
 
-function startNextRound() {
+async function startNextRound() {
 
     if (appData.settings.playMode !== "batch") {
         return;
@@ -2298,7 +2471,7 @@ function startNextRound() {
         unfinished
     ){
 
-        alert(
+        showAppMessage(
             "試合終了を先に実施してください"
         );
 
@@ -2306,7 +2479,7 @@ function startNextRound() {
     }
 
     const matchesToStart =
-        ensureMatchCapacity(
+        await ensureMatchCapacity(
             appData.settings.courtCount
         );
 
@@ -2359,11 +2532,85 @@ function updateMatchInfo() {
     const completed = getCompletedMatchTotal();
     const active = getActiveMatchCount();
 
+    const matchLimitText =
+        Number.isFinite(appData.matchTarget)
+            ? `${completed} / ${appData.matchTarget} 試合完了`
+            : `${completed} 試合完了 / 上限なし`;
+
     el.textContent =
-        `${completed}試合完了 / ${appData.matchTarget}試合` +
+        matchLimitText +
         (active > 0 ? `（進行中 ${active} 試合）` : "");
 
     updateProgressControls();
+
+}
+
+function showAppMessage(message) {
+
+    return showAppDialog(message);
+
+}
+
+function showAppConfirm(message, confirmLabel = "実行") {
+
+    return showAppDialog(message, {
+        confirm: true,
+        confirmLabel
+    });
+
+}
+
+function showAppDialog(
+    message,
+    { confirm = false, confirmLabel = "OK" } = {}
+) {
+
+    const dialog =
+        document.getElementById("appMessageDialog");
+
+    const messageText =
+        document.getElementById("appMessageText");
+
+    const cancelButton =
+        document.getElementById("appMessageCancelBtn");
+
+    const confirmButton =
+        document.getElementById("appMessageConfirmBtn");
+
+    if (
+        !dialog ||
+        !messageText ||
+        !cancelButton ||
+        !confirmButton ||
+        dialog.open
+    ) {
+        return Promise.resolve(false);
+    }
+
+    messageText.textContent = message;
+    cancelButton.classList.toggle("hidden", !confirm);
+    confirmButton.textContent = confirmLabel;
+    dialog.returnValue = "";
+
+    return new Promise(resolve => {
+        dialog.addEventListener(
+            "close",
+            () => {
+                dialog.classList.remove("fallback-open");
+                document.body.classList.remove("app-dialog-fallback-open");
+                resolve(dialog.returnValue === "confirm");
+            },
+            { once: true }
+        );
+
+        if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+        } else {
+            dialog.classList.add("fallback-open");
+            document.body.classList.add("app-dialog-fallback-open");
+            dialog.setAttribute("open", "");
+        }
+    });
 
 }
 
@@ -2384,6 +2631,21 @@ function getActiveMatchCount() {
 
 }
 
+function getUnallocatedMatchCount() {
+
+    if (!Number.isFinite(appData.matchTarget)) {
+        return Infinity;
+    }
+
+    return Math.max(
+        0,
+        appData.matchTarget -
+            getCompletedMatchTotal() -
+            getActiveMatchCount()
+    );
+
+}
+
 function incrementCompletedMatches(courtIndex) {
 
     if (!Array.isArray(appData.completedMatchesByCourt)) {
@@ -2395,25 +2657,27 @@ function incrementCompletedMatches(courtIndex) {
 
 }
 
-function ensureMatchCapacity(requestedMatches) {
+async function ensureMatchCapacity(requestedMatches) {
+
+    if (!Number.isFinite(appData.matchTarget)) {
+        return Math.max(0, requestedMatches);
+    }
 
     const activeMatches = getActiveMatchCount();
     const completedMatches = getCompletedMatchTotal();
-    let availableMatches = Math.max(
-        0,
-        appData.matchTarget - completedMatches - activeMatches
-    );
+    let availableMatches = getUnallocatedMatchCount();
 
     if (
         activeMatches === 0 &&
         availableMatches < appData.settings.courtCount &&
         appData.continuationPromptHandledForTarget !== appData.matchTarget
     ) {
-        const shouldContinue = confirm(
+        const shouldContinue = await showAppConfirm(
             `設定された試合数に到達、または残り試合数が使用コート数を下回りました。\n` +
             `現在 ${completedMatches} / ${appData.matchTarget} 試合です。\n` +
             `続行すると、さらに ${appData.matchTargetIncrement} 試合分を追加します。\n` +
-            "試合を継続しますか？"
+            "試合を継続しますか？",
+            "続行"
         );
 
         appData.continuationPromptHandledForTarget =
@@ -2428,10 +2692,9 @@ function ensureMatchCapacity(requestedMatches) {
 
         saveData();
 
-        availableMatches = Math.max(
-            0,
-            appData.matchTarget - completedMatches - activeMatches
-        );
+        availableMatches = getUnallocatedMatchCount();
+
+        updateProgressControls();
     }
 
     return Math.min(
@@ -2476,13 +2739,10 @@ function updateProgressControls() {
                 button.disabled = !isBatchMode;
             });
 
-        const unallocatedMatches = Math.max(
-            0,
-            appData.matchTarget -
-                getCompletedMatchTotal() -
-                getActiveMatchCount()
-        );
+        const unallocatedMatches =
+            getUnallocatedMatchCount();
         const limitWasDeclined =
+            Number.isFinite(appData.matchTarget) &&
             appData.continuationPromptHandledForTarget ===
             appData.matchTarget;
         const finishAllButton =
@@ -2516,7 +2776,7 @@ function updateProgressControls() {
 // 個別進行
 // ======================================
 
-function finishCourt(
+async function finishCourt(
     courtIndex
 ) {
 
@@ -2543,7 +2803,7 @@ function finishCourt(
 
     incrementCompletedMatches(courtIndex);
 
-    ensureMatchCapacity(0);
+    await ensureMatchCapacity(0);
 
     renderCourts();
 
@@ -2744,6 +3004,7 @@ function renderCourts() {
                     `<button
                         class="next-court-btn"
                         ${
+                            Number.isFinite(appData.matchTarget) &&
                             appData.matchTarget -
                                 getCompletedMatchTotal() -
                                 getActiveMatchCount() <= 0 &&
@@ -2772,6 +3033,13 @@ function renderCourts() {
         }
     );
 
+    const benchContainer =
+        document.getElementById("benchContainer");
+
+    if (benchContainer?.style.display === "block") {
+        renderBenchPlayers();
+    }
+
 }
 
 
@@ -2785,7 +3053,6 @@ function renderCourts() {
 // ・ペア重複
 // ・対戦重複
 // ・レベル均等
-// ・レベル統一
 // ・ミックス優先
 // ・コート変更加点
 // ・TOP10候補方式
@@ -2812,7 +3079,8 @@ function generateBestCandidate() {
 function generateBestCandidateForPlayers(
     players,
     courtCount,
-    courtNumbers
+    courtNumbers,
+    balancePlayers = null
 ) {
 
     const candidates = [];
@@ -2835,6 +3103,10 @@ function generateBestCandidateForPlayers(
 
         if (!candidate) {
             continue;
+        }
+
+        if (balancePlayers) {
+            candidate.balancePlayers = balancePlayers;
         }
 
         candidate.score =
@@ -3126,8 +3398,11 @@ function getPlayBalanceBonus(
 
     let bonus = 0;
 
+    const balancePlayers =
+        candidate.balancePlayers || appData.participants;
+
     const avgPlayCount =
-        appData.participants
+        balancePlayers
         .reduce(
             (a, b) =>
                 a + b.playCount,
@@ -3135,7 +3410,7 @@ function getPlayBalanceBonus(
         ) /
         Math.max(
             1,
-            appData.participants.length
+            balancePlayers.length
         );
 
     candidate.courts.forEach(
@@ -3230,18 +3505,6 @@ function getLevelBonus(
 
             }
 
-            if (
-                mode ===
-                "levelUnified"
-            ) {
-
-                bonus +=
-                scoreLevelUnified(
-                    court
-                );
-
-            }
-
         }
     );
 
@@ -3285,46 +3548,6 @@ function scoreLevelBalance(
 
     return score;
 
-}
-
-// ======================================
-// レベル統一
-// ======================================
-
-function scoreLevelUnified(
- court
-){
-
-    const teamALevel =
-    court.teamA[0].level +
-    court.teamA[1].level;
-
-    const teamBLevel =
-    court.teamB[0].level +
-    court.teamB[1].level;
-
-    const diff =
-    Math.abs(
-        teamALevel -
-        teamBLevel
-    );
-
-    if(diff===0){
-
-        return 20;
-    }
-
-    if(diff===1){
-
-        return 10;
-    }
-
-    if(diff===2){
-
-        return 3;
-    }
-
-    return -10;
 }
 
 // ======================================
@@ -3467,7 +3690,7 @@ function applyCandidate(candidate) {
 
     if (!candidate) {
 
-        alert(
+        showAppMessage(
             "組み合わせを生成できませんでした"
         );
 
@@ -3532,8 +3755,9 @@ function generateRound(
     const players =
         getSelectablePlayers();
 
-    const candidate =
-        generateBestCandidateForPlayers(
+    const candidate = appData.settings.groupMode
+        ? generateGroupScopedCandidate(players, courtIndices)
+        : generateBestCandidateForPlayers(
             players,
             courtIndices.length,
             courtIndices.map(index => index + 1)
@@ -3542,6 +3766,83 @@ function generateRound(
     return applyCandidate(
         candidate
     );
+
+}
+
+function generateGroupScopedCandidate(players, courtIndices) {
+
+    const groupNames = getConfiguredGroupNames();
+    const playersByGroup = new Map(
+        groupNames.map(groupName => [groupName, []])
+    );
+
+    players.forEach(player => {
+        const groupName = groupNames.includes(player.group)
+            ? player.group
+            : groupNames[0];
+
+        playersByGroup.get(groupName).push(player);
+    });
+
+    const courtAssignments = new Map(
+        groupNames.map(groupName => [groupName, []])
+    );
+
+    courtIndices.forEach(courtIndex => {
+        const eligibleGroups = groupNames.filter(groupName => {
+            const groupPlayers = playersByGroup.get(groupName);
+            const assignedCourts = courtAssignments.get(groupName);
+
+            return groupPlayers.length >= (assignedCourts.length + 1) * 4;
+        });
+
+        eligibleGroups.sort((groupA, groupB) => {
+            const playersA = playersByGroup.get(groupA);
+            const playersB = playersByGroup.get(groupB);
+            const capacityA = Math.floor(playersA.length / 4);
+            const capacityB = Math.floor(playersB.length / 4);
+            const utilizationA =
+                courtAssignments.get(groupA).length / capacityA;
+            const utilizationB =
+                courtAssignments.get(groupB).length / capacityB;
+
+            return utilizationA - utilizationB ||
+                playersB.length - playersA.length;
+        });
+
+        if (eligibleGroups.length > 0) {
+            courtAssignments
+                .get(eligibleGroups[0])
+                .push(courtIndex);
+        }
+    });
+
+    const generatedCourts = [];
+
+    groupNames.forEach(groupName => {
+        const assignedCourtIndices =
+            courtAssignments.get(groupName);
+
+        if (assignedCourtIndices.length === 0) {
+            return;
+        }
+
+        const groupPlayers = playersByGroup.get(groupName);
+        const candidate = generateBestCandidateForPlayers(
+            groupPlayers,
+            assignedCourtIndices.length,
+            assignedCourtIndices.map(index => index + 1),
+            groupPlayers
+        );
+
+        if (candidate) {
+            generatedCourts.push(...candidate.courts);
+        }
+    });
+
+    return generatedCourts.length > 0
+        ? { courts: generatedCourts }
+        : null;
 
 }
 
@@ -3655,7 +3956,7 @@ function speakMatchAnnouncements(
 function recallLastAnnouncements() {
 
     if (lastMatchAnnouncements.length === 0) {
-        alert("再コールする対戦カードがありません。");
+        showAppMessage("再コールする対戦カードがありません。");
         return;
     }
 
@@ -3663,7 +3964,7 @@ function recallLastAnnouncements() {
         lastMatchAnnouncements,
         lastAnnouncementMode === "batch"
     )) {
-        alert("このブラウザーは音声読み上げに対応していません。");
+        showAppMessage("このブラウザーは音声読み上げに対応していません。");
     }
 
 }
@@ -3822,7 +4123,7 @@ function updateMatchHistories() {
 // 個別進行
 // ======================================
 
-function createNextCourtRound(
+async function createNextCourtRound(
     courtIndex
 ) {
 
@@ -3836,7 +4137,7 @@ function createNextCourtRound(
         return false;
     }
 
-    if (ensureMatchCapacity(1) === 0) {
+    if (await ensureMatchCapacity(1) === 0) {
         return false;
     }
 
@@ -3848,8 +4149,12 @@ function createNextCourtRound(
             courtIndex
         );
 
-    const candidate =
-        generateBestCandidateForPlayers(
+    const candidate = appData.settings.groupMode
+        ? generateGroupScopedCandidate(
+            availablePlayers,
+            [courtIndex]
+        )
+        : generateBestCandidateForPlayers(
             availablePlayers,
             1,
             [courtIndex + 1]
@@ -4065,6 +4370,8 @@ function validateScoreSettings() {
 
 function normalizeParticipants() {
 
+    const groupNames = getConfiguredGroupNames();
+
     appData.participants =
         appData.participants.filter(
             player =>
@@ -4086,6 +4393,10 @@ function normalizeParticipants() {
 
             if (player.gender == null) {
                 player.gender = "";
+            }
+
+            if (!groupNames.includes(player.group)) {
+                player.group = groupNames[0];
             }
 
             if (
@@ -4171,6 +4482,31 @@ function normalizeData() {
         ...defaults.settings,
         ...savedSettings
     };
+
+    normalizedSettings.groupNames =
+        normalizeGroupNames(normalizedSettings.groupNames);
+
+    normalizedSettings.groupMode =
+        normalizedSettings.groupMode === true;
+
+    if (
+        !["-", "levelBalance", "mix"].includes(
+            normalizedSettings.optionMode
+        )
+    ) {
+        normalizedSettings.optionMode = "-";
+    }
+
+    const savedMatchLimit = normalizedSettings.totalMatches;
+    const numericMatchLimit = Number(savedMatchLimit);
+
+    normalizedSettings.totalMatches =
+        savedMatchLimit == null || savedMatchLimit === ""
+            ? null
+            : Number.isFinite(numericMatchLimit) && numericMatchLimit >= 1
+                ? Math.floor(numericMatchLimit)
+                : null;
+
     const normalizedCourts =
         Array.isArray(savedData.courts)
             ? savedData.courts.filter(
@@ -4235,6 +4571,30 @@ function normalizeData() {
         normalizedCourts.filter(
             court => court.status === "playing"
         ).length;
+    const persistedMatchTarget =
+        Number(savedData.matchTarget);
+    const matchTargetSource =
+        Number.isFinite(persistedMatchTarget) && persistedMatchTarget > 0
+            ? Math.floor(persistedMatchTarget)
+            : normalizedSettings.totalMatches;
+    const normalizedMatchTarget =
+        matchTargetSource == null
+            ? null
+            : Math.max(
+                completedMatchTotal + activeMatchTotal,
+                matchTargetSource
+            );
+    const normalizedMatchTargetIncrement =
+        normalizedMatchTarget == null
+            ? 0
+            : Math.max(
+                1,
+                Math.floor(
+                    Number(savedData.matchTargetIncrement) ||
+                    normalizedSettings.totalMatches ||
+                    normalizedMatchTarget
+                )
+            );
 
     appData = {
         ...defaults,
@@ -4255,22 +4615,8 @@ function normalizeData() {
                 ? savedData.currentRoundGenerated
                 : defaults.currentRoundGenerated,
         courts: normalizedCourts,
-        matchTarget: Math.max(
-            completedMatchTotal + activeMatchTotal,
-            Math.floor(
-                Number(savedData.matchTarget) ||
-                Number(normalizedSettings.totalMatches) ||
-                defaults.settings.totalMatches
-            )
-        ),
-        matchTargetIncrement: Math.max(
-            1,
-            Math.floor(
-                Number(savedData.matchTargetIncrement) ||
-                Number(normalizedSettings.totalMatches) ||
-                defaults.settings.totalMatches
-            )
-        ),
+        matchTarget: normalizedMatchTarget,
+        matchTargetIncrement: normalizedMatchTargetIncrement,
         continuationPromptHandledForTarget:
             Math.max(
                 0,

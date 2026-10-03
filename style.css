@@ -29,6 +29,74 @@ body{
     text-align:center;
 }
 
+.app-message-dialog{
+    width:min(420px, calc(100% - 32px));
+    max-width:none;
+    margin:auto;
+    padding:24px;
+    border:0;
+    border-radius:12px;
+    background:#fff;
+    color:#222;
+    box-shadow:0 12px 36px rgba(0,0,0,0.28);
+}
+
+.app-message-dialog::backdrop{
+    background:rgba(0,0,0,0.48);
+}
+
+body.app-dialog-fallback-open::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:2000;
+    background:rgba(0,0,0,0.48);
+}
+
+.app-message-dialog.fallback-open{
+    position:fixed;
+    top:50%;
+    left:50%;
+    z-index:2001;
+    transform:translate(-50%, -50%);
+}
+
+.app-message-dialog form{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.app-message-dialog p{
+    font-size:18px;
+    line-height:1.6;
+}
+
+.app-message-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
+
+.app-message-ok,
+.app-message-cancel{
+    width:auto;
+    min-width:64px;
+    margin:0;
+    padding:10px 18px;
+    border-radius:8px;
+}
+
+.app-message-ok{
+    background:#2e7d32;
+    color:#fff;
+}
+
+.app-message-cancel{
+    background:#e2e2e2;
+    color:#222;
+}
+
 .app-header h1{
     font-size:32px;
 }
@@ -498,6 +566,17 @@ td{
     user-select:none;
 }
 
+.bench-level-btn{
+    width:auto;
+    min-width:120px;
+    margin:0;
+    padding:6px 10px;
+    background:transparent;
+    color:inherit;
+    font-size:18px;
+    white-space:nowrap;
+}
+
 .hidden{
     display:none !important;
 }
@@ -506,6 +585,11 @@ td{
 
 body.dark-mode{
     background:#1f1f1f;
+    color:#f5f5f5;
+}
+
+body.dark-mode .app-message-dialog{
+    background:#2c2c2c;
     color:#f5f5f5;
 }
 
