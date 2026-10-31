@@ -62,6 +62,8 @@ function createDefaultData() {
 
             levelBonus: 100,
 
+            levelGapThreshold: 1,
+
             mixBonus: 100,
 
             courtChangeBonus: 50,
@@ -1492,6 +1494,11 @@ function restoreSettings() {
     );
 
     setValue(
+        "levelGapThreshold",
+        score.levelGapThreshold
+    );
+
+    setValue(
         "mixBonus",
         score.mixBonus
     );
@@ -1795,6 +1802,19 @@ function saveAdminSettings() {
         );
 
     appData.scoreSettings
+        .levelGapThreshold =
+
+        Math.max(
+            1,
+            Math.floor(
+                getNumber(
+                    "levelGapThreshold",
+                    1
+                )
+            )
+        );
+
+    appData.scoreSettings
         .mixBonus =
 
         getNumber(
@@ -2085,6 +2105,8 @@ document.addEventListener(
             "consecutivePlayPenalty",
 
             "levelBonus",
+
+            "levelGapThreshold",
 
             "mixBonus",
 
@@ -3615,6 +3637,8 @@ function scoreLevelBalance(
 ) {
 
     let score = 0;
+    const levelGapThreshold =
+        appData.scoreSettings.levelGapThreshold;
 
     const pair1Diff =
         Math.abs(
@@ -3629,15 +3653,45 @@ function scoreLevelBalance(
         );
 
     if (
-        pair1Diff <= 1
+        pair1Diff <= levelGapThreshold
     ) {
         score += 5;
     }
+    else {
+        score -= 5;
+    }
 
     if (
-        pair2Diff <= 1
+        pair2Diff <= levelGapThreshold
     ) {
         score += 5;
+    }
+    else {
+        score -= 5;
+    }
+
+    const teamALevelTotal =
+        court.teamA[0].level +
+        court.teamA[1].level;
+
+    const teamBLevelTotal =
+        court.teamB[0].level +
+        court.teamB[1].level;
+
+    const opponentLevelTotalDiff =
+        Math.abs(
+            teamALevelTotal -
+            teamBLevelTotal
+        );
+
+    if (
+        opponentLevelTotalDiff <= levelGapThreshold
+    ) {
+        score += 5;
+    }
+    else {
+        score -=
+            (opponentLevelTotalDiff - levelGapThreshold) * 5;
     }
 
     return score;
@@ -4424,6 +4478,14 @@ function validateScoreSettings() {
         Math.max(
             0,
             Number(s.levelBonus || 100)
+        );
+
+    s.levelGapThreshold =
+        Math.max(
+            1,
+            Math.floor(
+                Number(s.levelGapThreshold) || 1
+            )
         );
 
     s.mixBonus =

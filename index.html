@@ -502,7 +502,14 @@
                 <input id="levelBonus" type="number">
                 <details class="setting-help">
                     <summary>説明</summary>
-                    <p>オプション設定が「レベル均等」の場合だけ有効です。各ペア内のレベル差が1以内なら加点します。係数を上げると、ペア内のレベル差を小さくする基準を強く反映します。</p>
+                    <p>オプション設定が「レベル均等」の場合だけ有効です。係数を上げると、レベル差の基準を組み合わせに強く反映します。</p>
+                </details>
+
+                <label>レベル差の許容値</label>
+                <input id="levelGapThreshold" type="number" min="1" step="1" value="1">
+                <details class="setting-help">
+                    <summary>説明</summary>
+                    <p>ペア内のレベル差と、対戦するペア同士のレベル合計差に共通して適用します。設定値以内なら加点し、超える場合は減点します。初期値は1です。</p>
                 </details>
 
                 <label>ミックス加点</label>

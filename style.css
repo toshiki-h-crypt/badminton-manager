@@ -129,6 +129,11 @@ body.app-dialog-fallback-open::before{
     display:block;
 }
 
+main{
+    width:min(100%, 1400px);
+    margin:0 auto;
+}
+
 .card{
     background:#fff;
     border-radius:8px;
@@ -348,6 +353,7 @@ button{
 #participantListContainer{
     display:none;
     margin-top:10px;
+    overflow-x:auto;
 }
 
 .start-match-btn{
@@ -466,6 +472,7 @@ button{
 #benchContainer{
     display:none;
     margin-top:10px;
+    overflow-x:auto;
 }
 
 table{
@@ -492,12 +499,20 @@ td{
 .court-card{
     background:#b8dfba;
     border:2px solid #183049;
-
     border-radius:16px;
-
     padding:20px;
-
     margin-bottom:16px;
+}
+
+#courtContainer{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+    gap:16px;
+}
+
+#courtContainer .court-card{
+    min-width:0;
+    margin-bottom:0;
 }
 
 .court-header{
@@ -514,11 +529,10 @@ td{
 .court-match{
     margin-top:20px;
     margin-bottom:20px;
-
     font-size:40px;
     font-weight:bold;
-
     text-align:center;
+    overflow-wrap:anywhere;
 }
 
 .court-card.finished .court-match{
@@ -648,6 +662,14 @@ body.dark-mode .delete-btn{
 
 @media screen and (max-width:768px){
 
+    .tab-content{
+        padding:8px;
+    }
+
+    .card{
+        padding:12px;
+    }
+
     .app-header h1{
         font-size:24px;
     }
@@ -665,8 +687,30 @@ body.dark-mode .delete-btn{
     }
 
     .row button{
-        width:clamp(120px, 36%, 200px);
-        flex-basis:clamp(120px, 36%, 200px);
+        width:clamp(104px, 36%, 200px);
+        flex-basis:clamp(104px, 36%, 200px);
+    }
+
+    .add-number-label,
+    .add-name-label,
+    .finish-label,
+    .next-match-label,
+    .start-match-label,
+    .delete-all-label{
+        font-size:clamp(20px, 4vw, 30px);
+        letter-spacing:0.03em;
+    }
+
+    .row #addNumberBtn,
+    #addNameBtn,
+    #recallAnnouncementBtn,
+    .finish-all-btn,
+    .finish-court-btn,
+    .next-match-btn,
+    .next-court-btn,
+    .start-match-btn,
+    .delete-all-btn{
+        padding:12px 14px;
     }
 
     .court-controls{
@@ -682,5 +726,69 @@ body.dark-mode .delete-btn{
 
     #batchControls{
         flex-direction:column;
+    }
+
+    .visibility-toggle-title{
+        font-size:clamp(18px, 3.5vw, 26px);
+    }
+
+    .visibility-toggle-options{
+        min-height:52px;
+    }
+
+    .visibility-option{
+        font-size:clamp(16px, 3vw, 22px);
+    }
+
+    table{
+        min-width:640px;
+    }
+}
+
+@media screen and (max-width:480px){
+
+    .app-header{
+        padding:12px 8px;
+    }
+
+    .app-header h1{
+        font-size:20px;
+    }
+
+    .tab-button{
+        min-height:44px;
+        padding:10px 6px;
+    }
+
+    .court-card{
+        padding:14px;
+    }
+
+    .court-match{
+        margin:14px 0;
+        font-size:clamp(20px, 6vw, 28px);
+        line-height:1.35;
+    }
+
+    .court-title{
+        font-size:20px;
+    }
+
+    .row{
+        gap:6px;
+    }
+
+    .row #addNumberBtn{
+        width:clamp(104px, 35vw, 128px);
+        min-width:104px;
+        flex:0 0 clamp(104px, 35vw, 128px);
+    }
+
+    .add-number-label{
+        font-size:18px;
+    }
+
+    #participantSummary{
+        line-height:1.8;
     }
 }
