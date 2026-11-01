@@ -3061,7 +3061,7 @@ function renderCourts() {
                 );
 
             card.className =
-                "court-card";
+                `court-card court-color-${(index % 6) + 1}`;
 
             if (court.status === "finished") {
                 card.classList.add("finished");
@@ -3070,12 +3070,12 @@ function renderCourts() {
             const teamA =
                 (court.teamA || [])
                     .map(p => p.name)
-                    .join(" : ");
+                    .join("・");
 
             const teamB =
                 (court.teamB || [])
                     .map(p => p.name)
-                    .join(" : ");
+                    .join("・");
 
             card.innerHTML = `
 
@@ -3093,10 +3093,35 @@ function renderCourts() {
                     ? `${index + 1}コート 第${court.matchNo || appData.currentMatch}試合`
                     : `${index + 1}コート`;
 
-            card.querySelector(".court-match").textContent =
-                teamA || teamB
-                    ? `${teamA} VS ${teamB}`
-                    : "次の試合待ち";
+            const courtMatch =
+                card.querySelector(".court-match");
+
+            if (teamA || teamB) {
+                const teamARow =
+                    document.createElement("div");
+                teamARow.className = "court-team";
+                teamARow.textContent = teamA;
+
+                const versus =
+                    document.createElement("div");
+                versus.className = "court-vs";
+                versus.textContent = "VS";
+
+                const teamBRow =
+                    document.createElement("div");
+                teamBRow.className = "court-team";
+                teamBRow.textContent = teamB;
+
+                courtMatch.append(
+                    teamARow,
+                    versus,
+                    teamBRow
+                );
+            }
+            else {
+                courtMatch.classList.add("waiting");
+                courtMatch.textContent = "次の試合待ち";
+            }
 
             if (isIndividual) {
 
