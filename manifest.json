@@ -1,6 +1,6 @@
 {
-  "name": "ダブルス対戦管理",
-  "short_name": "ダブルス管理",
+  "name": "Doubles Match Maker",
+  "short_name": "Doubles Match Maker",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#2e7d32",
