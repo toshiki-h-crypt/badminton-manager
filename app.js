@@ -901,6 +901,15 @@ function renderParticipantTable() {
                 </td>
 
                 <td>
+                    <input
+                        type="checkbox"
+                        class="force-rest-checkbox"
+                        data-player-id="${escapeHtml(player.id)}"
+                        aria-label="${escapeHtml(player.name)}の休憩設定"
+                        ${player.forceRest ? "checked" : ""}>
+                </td>
+
+                <td>
 
                     <button
                         class="delete-btn"
@@ -928,6 +937,24 @@ function renderParticipantTable() {
 // ======================================
 
 function bindParticipantTableEvents() {
+
+    document
+        .querySelectorAll(
+            "#participantTableBody .force-rest-checkbox"
+        )
+        .forEach(checkbox => {
+
+            checkbox.addEventListener(
+                "change",
+                function () {
+                    toggleForceRest(
+                        this.dataset.playerId,
+                        this.checked
+                    );
+                }
+            );
+
+        });
 
     document
         .querySelectorAll(
@@ -1604,8 +1631,6 @@ async function startMatch() {
             player.lastCourt = null;
 
             player.lastMatchNo = 0;
-
-            player.forceRest = false
 
         }
     );
@@ -2330,6 +2355,9 @@ function renderBenchPlayers() {
 
                 <input
                     type="checkbox"
+                    class="force-rest-checkbox"
+                    data-player-id="${escapeHtml(player.id)}"
+                    aria-label="${escapeHtml(player.name)}の休憩設定"
                     ${player.forceRest ? "checked" : ""}
                     onchange="toggleForceRest('${player.id}', this.checked)">
 
@@ -2455,6 +2483,8 @@ function toggleForceRest(
     }
 
     player.forceRest = checked;
+
+    renderParticipantTable();
 
     saveData();
 
@@ -3060,8 +3090,15 @@ function renderCourts() {
                     "div"
                 );
 
+            const isIndividual =
+                appData.settings.playMode === "individual";
+
             card.className =
                 `court-card court-color-${(index % 6) + 1}`;
+
+            if (isIndividual) {
+                card.classList.add("individual");
+            }
 
             if (court.status === "finished") {
                 card.classList.add("finished");
@@ -3085,13 +3122,8 @@ function renderCourts() {
 
             `;
 
-            const isIndividual =
-                appData.settings.playMode === "individual";
-
             card.querySelector(".court-title").textContent =
-                isIndividual
-                    ? `${index + 1}コート 第${court.matchNo || appData.currentMatch}試合`
-                    : `${index + 1}コート`;
+                `${index + 1}コート`;
 
             const courtMatch =
                 card.querySelector(".court-match");
@@ -3121,6 +3153,15 @@ function renderCourts() {
             else {
                 courtMatch.classList.add("waiting");
                 courtMatch.textContent = "次の試合待ち";
+            }
+
+            if (isIndividual) {
+                const matchNumber =
+                    document.createElement("div");
+                matchNumber.className = "court-match-number";
+                matchNumber.textContent =
+                    `第${court.matchNo || appData.currentMatch}試合`;
+                courtMatch.appendChild(matchNumber);
             }
 
             if (isIndividual) {
@@ -3303,7 +3344,8 @@ function createCandidateForPlayers(
     const requiredPlayers =
         courtCount * 4;
 
-    const eligiblePlayers = [...players];
+    const eligiblePlayers =
+        players.filter(player => !player.forceRest);
 
     if (
         eligiblePlayers.length < requiredPlayers

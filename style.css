@@ -356,6 +356,11 @@ button{
     overflow-x:auto;
 }
 
+.force-rest-checkbox{
+    width:auto;
+    margin:0;
+}
+
 .start-match-btn{
     display:flex;
     align-items:center;
@@ -639,8 +644,39 @@ td{
     justify-content:center;
 }
 
-.court-card.finished .court-match{
-    filter:saturate(.55);
+.court-card.individual .court-match{
+    padding-bottom:48px;
+}
+
+.court-match-number{
+    position:absolute;
+    bottom:8px;
+    left:50%;
+    z-index:2;
+    padding:3px 12px;
+    transform:translateX(-50%);
+    border-radius:999px;
+    background:rgba(0,0,0,.58);
+    color:#fff;
+    font-size:clamp(14px, 1.8vw, 20px);
+    line-height:1.3;
+    white-space:nowrap;
+}
+
+.court-card.finished{
+    --court-deep:#555;
+    --court-field:#b8b8b8;
+    --court-glow:#dedede;
+}
+
+.court-card.finished .court-team{
+    background:linear-gradient(145deg, #eee, #d2d2d2);
+    color:#555;
+}
+
+.court-card.finished .court-vs{
+    color:#777;
+    -webkit-text-stroke-color:#444;
 }
 
 .court-controls{
