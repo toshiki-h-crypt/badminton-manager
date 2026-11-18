@@ -164,6 +164,18 @@ select{
     margin-bottom:10px;
 }
 
+.pair-rest-note{
+    display:block;
+    color:#b3261e;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.pair-setting-singleton{
+    color:#b3261e;
+    font-weight:bold;
+}
+
 textarea{
     resize:vertical;
 }

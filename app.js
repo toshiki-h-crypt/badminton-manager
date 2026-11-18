@@ -6,6 +6,7 @@
 
 const STORAGE_KEY = "doublesManagerData";
 const DEFAULT_GROUP_NAMES = ["A", "B", "C", "D", "E"];
+const DEFAULT_PAIR_SETTING_NAMES = ["A", "B", "C", "D", "E"];
 
 // ======================================
 // アプリデータ
@@ -42,6 +43,8 @@ function createDefaultData() {
             groupMode: false,
 
             groupNames: [...DEFAULT_GROUP_NAMES],
+
+            pairSettingNames: [...DEFAULT_PAIR_SETTING_NAMES],
 
             autoSave: true,
 
@@ -125,6 +128,34 @@ function getConfiguredGroupNames() {
 
     return normalizeGroupNames(
         appData.settings.groupNames
+    );
+
+}
+
+function normalizePairSettingNames(value) {
+
+    const values = Array.isArray(value)
+        ? value
+        : String(value ?? "").split(/[\s,、，]+/);
+
+    const names = [
+        ...new Set(
+            values
+                .map(name => String(name).trim())
+                .filter(name => name && name !== "-")
+        )
+    ];
+
+    return names.length > 0
+        ? names
+        : [...DEFAULT_PAIR_SETTING_NAMES];
+
+}
+
+function getConfiguredPairSettingNames() {
+
+    return normalizePairSettingNames(
+        appData.settings.pairSettingNames
     );
 
 }
@@ -711,6 +742,8 @@ function addNumberPlayers() {
 
             group: getConfiguredGroupNames()[0],
 
+            pairSetting: "-",
+
             level: 2,
 
             playCount: 0,
@@ -779,6 +812,8 @@ function addNamePlayers() {
 
             group: getConfiguredGroupNames()[0],
 
+            pairSetting: "-",
+
             level: 2,
 
             playCount: 0,
@@ -828,6 +863,9 @@ function renderParticipantTable() {
 
     tbody.innerHTML = "";
 
+    const pairSettingRestPlayerIds =
+        getPairSettingRestPlayerIds();
+
     appData.participants.forEach(
         (player, index) => {
 
@@ -846,6 +884,16 @@ function renderParticipantTable() {
                     `)
                     .join("");
 
+            const pairSettingOptions = [
+                `<option value="-" ${player.pairSetting === "-" ? "selected" : ""}>-</option>`,
+                ...getConfiguredPairSettingNames().map(pairSettingName => `
+                    <option value="${escapeHtml(pairSettingName)}"
+                        ${player.pairSetting === pairSettingName ? "selected" : ""}>
+                        ${escapeHtml(pairSettingName)}
+                    </option>
+                `)
+            ].join("");
+
             row.innerHTML = `
 
                 <td>
@@ -860,6 +908,14 @@ function renderParticipantTable() {
                 </td>
 
                 <td>
+                    <button
+                        class="level-btn"
+                        data-index="${index}">
+                        ${getLevelStars(player.level)}
+                    </button>
+                </td>
+
+                <td>
                     <select
                         class="group-select"
                         data-index="${index}">
@@ -868,11 +924,11 @@ function renderParticipantTable() {
                 </td>
 
                 <td>
-                    <button
-                        class="level-btn"
+                    <select
+                        class="pair-setting-select ${getPairSettingParticipantCount(player.pairSetting) === 1 ? "pair-setting-singleton" : ""}"
                         data-index="${index}">
-                        ${getLevelStars(player.level)}
-                    </button>
+                        ${pairSettingOptions}
+                    </select>
                 </td>
 
                 <td>
@@ -907,6 +963,9 @@ function renderParticipantTable() {
                         data-player-id="${escapeHtml(player.id)}"
                         aria-label="${escapeHtml(player.name)}の休憩設定"
                         ${player.forceRest ? "checked" : ""}>
+                    ${pairSettingRestPlayerIds.has(player.id) && !player.forceRest
+                        ? '<span class="pair-rest-note">ペア休憩</span>'
+                        : ""}
                 </td>
 
                 <td>
@@ -1016,6 +1075,24 @@ function bindParticipantTableEvents() {
                 "change",
                 function () {
                     updatePlayerGroup(
+                        Number(this.dataset.index),
+                        this.value
+                    );
+                }
+            );
+
+        });
+
+    document
+        .querySelectorAll(
+            ".pair-setting-select"
+        )
+        .forEach(select => {
+
+            select.addEventListener(
+                "change",
+                function () {
+                    updatePlayerPairSetting(
                         Number(this.dataset.index),
                         this.value
                     );
@@ -1137,6 +1214,28 @@ function updatePlayerGroup(index, groupName) {
     player.group = groupName;
 
     refreshBenchPlayersIfVisible();
+
+    saveData();
+
+}
+
+function updatePlayerPairSetting(index, pairSetting) {
+
+    const player = appData.participants[index];
+
+    if (
+        !player ||
+        (
+            pairSetting !== "-" &&
+            !getConfiguredPairSettingNames().includes(pairSetting)
+        )
+    ) {
+        return;
+    }
+
+    player.pairSetting = pairSetting;
+
+    renderParticipantTable();
 
     saveData();
 
@@ -1471,6 +1570,11 @@ function restoreSettings() {
     setValue(
         "groupNames",
         getConfiguredGroupNames().join(", ")
+    );
+
+    setValue(
+        "pairSettingNames",
+        getConfiguredPairSettingNames().join(", ")
     );
 
     setValue(
@@ -1905,6 +2009,34 @@ function saveGroupNamesFromScreen() {
 
 }
 
+function savePairSettingNamesFromScreen() {
+
+    const pairSettingNames =
+        normalizePairSettingNames(
+            getValue("pairSettingNames")
+        );
+
+    appData.settings.pairSettingNames = pairSettingNames;
+
+    appData.participants.forEach(player => {
+        if (
+            player.pairSetting !== "-" &&
+            !pairSettingNames.includes(player.pairSetting)
+        ) {
+            player.pairSetting = "-";
+        }
+    });
+
+    setValue(
+        "pairSettingNames",
+        pairSettingNames.join(", ")
+    );
+
+    renderParticipantTable();
+    saveData();
+
+}
+
 // ======================================
 // スコア設定初期化
 // ======================================
@@ -2115,6 +2247,11 @@ document.addEventListener(
             return;
         }
 
+        if (event.target.id === "pairSettingNames") {
+            savePairSettingNamesFromScreen();
+            return;
+        }
+
         const adminIds = [
 
             "autoSave",
@@ -2293,6 +2430,9 @@ function renderBenchPlayers() {
     const benchPlayers =
         getBenchPlayers();
 
+    const pairSettingRestPlayerIds =
+        getPairSettingRestPlayerIds();
+
     benchPlayers.forEach(
         (player, index) => {
 
@@ -2314,6 +2454,16 @@ function renderBenchPlayers() {
                     `)
                     .join("");
 
+            const pairSettingOptions = [
+                `<option value="-" ${player.pairSetting === "-" ? "selected" : ""}>-</option>`,
+                ...getConfiguredPairSettingNames().map(pairSettingName => `
+                    <option value="${escapeHtml(pairSettingName)}"
+                        ${player.pairSetting === pairSettingName ? "selected" : ""}>
+                        ${escapeHtml(pairSettingName)}
+                    </option>
+                `)
+            ].join("");
+
             row.innerHTML = `
 
             <td>
@@ -2327,6 +2477,15 @@ function renderBenchPlayers() {
             </td>
 
             <td>
+                <button
+                    type="button"
+                    class="bench-level-btn"
+                    onclick="cycleBenchPlayerLevel('${player.id}')">
+                    ${getLevelStars(player.level)}
+                </button>
+            </td>
+
+            <td>
                 <select
                     onchange="updateBenchGroup('${player.id}', this.value)">
                     ${groupOptions}
@@ -2334,12 +2493,11 @@ function renderBenchPlayers() {
             </td>
 
             <td>
-                <button
-                    type="button"
-                    class="bench-level-btn"
-                    onclick="cycleBenchPlayerLevel('${player.id}')">
-                    ${getLevelStars(player.level)}
-                </button>
+                <select
+                    class="pair-setting-select ${getPairSettingParticipantCount(player.pairSetting) === 1 ? "pair-setting-singleton" : ""}"
+                    onchange="updateBenchPairSetting('${player.id}', this.value)">
+                    ${pairSettingOptions}
+                </select>
             </td>
 
             <td>
@@ -2360,6 +2518,9 @@ function renderBenchPlayers() {
                     aria-label="${escapeHtml(player.name)}の休憩設定"
                     ${player.forceRest ? "checked" : ""}
                     onchange="toggleForceRest('${player.id}', this.checked)">
+                ${pairSettingRestPlayerIds.has(player.id) && !player.forceRest
+                    ? '<span class="pair-rest-note">ペア休憩</span>'
+                    : ""}
 
             </td>
 
@@ -2414,6 +2575,18 @@ function updateBenchGroup(playerId, groupName) {
 
     if (index >= 0) {
         updatePlayerGroup(index, groupName);
+    }
+
+}
+
+function updateBenchPairSetting(playerId, pairSetting) {
+
+    const index = appData.participants.findIndex(
+        player => String(player.id) === String(playerId)
+    );
+
+    if (index >= 0) {
+        updatePlayerPairSetting(index, pairSetting);
     }
 
 }
@@ -2490,16 +2663,69 @@ function toggleForceRest(
 
 }
 
+function getPairSettingRestPlayerIds() {
+
+    const playersByPairSetting = new Map();
+
+    appData.participants.forEach(player => {
+        const pairSetting = player.pairSetting;
+
+        if (!pairSetting || pairSetting === "-") {
+            return;
+        }
+
+        if (!playersByPairSetting.has(pairSetting)) {
+            playersByPairSetting.set(pairSetting, []);
+        }
+
+        playersByPairSetting.get(pairSetting).push(player);
+    });
+
+    const restingPlayerIds = new Set();
+
+    playersByPairSetting.forEach(groupPlayers => {
+        const restingCount = groupPlayers.filter(
+            player => player.forceRest
+        ).length;
+
+        if (
+            groupPlayers.length === 2 &&
+            restingCount > 0
+        ) {
+            groupPlayers.forEach(
+                player => restingPlayerIds.add(player.id)
+            );
+            return;
+        }
+
+        if (
+            groupPlayers.length >= 3 &&
+            groupPlayers.length - restingCount < 2
+        ) {
+            groupPlayers.forEach(
+                player => restingPlayerIds.add(player.id)
+            );
+        }
+    });
+
+    return restingPlayerIds;
+
+}
+
 // ======================================
 // 出場対象選手取得
 // ======================================
 
 function getSelectablePlayers() {
 
-    return appData.participants
+    const pairSettingRestPlayerIds =
+        getPairSettingRestPlayerIds();
 
+    return appData.participants
     .filter(
-        p => !p.forceRest
+        player =>
+            !player.forceRest &&
+            !pairSettingRestPlayerIds.has(player.id)
     )
 
     .sort(
@@ -2982,6 +3208,9 @@ function getAvailablePlayersForCourt(
     targetCourtIndex
 ) {
 
+    const pairSettingRestPlayerIds =
+        getPairSettingRestPlayerIds();
+
     const playingIds =
         new Set();
 
@@ -3020,7 +3249,8 @@ function getAvailablePlayersForCourt(
                 player.id
             ) &&
 
-            !player.forceRest
+            !player.forceRest &&
+            !pairSettingRestPlayerIds.has(player.id)
     );
 
 }
@@ -3287,9 +3517,14 @@ function generateBestCandidateForPlayers(
             continue;
         }
 
-        if (balancePlayers) {
-            candidate.balancePlayers = balancePlayers;
-        }
+        candidate.balancePlayers =
+            balancePlayers || players;
+
+        candidate.playCountSpread =
+            getProjectedPlayCountSpread(candidate);
+
+        candidate.pairRepeatCount =
+            getPairPenalty(candidate);
 
         candidate.score =
             calculateScore(
@@ -3309,18 +3544,38 @@ function generateBestCandidateForPlayers(
         return null;
     }
 
-    candidates.sort(
-    (a,b)=>
-        b.score-a.score
-    );
+    const bestPlayCountSpread =
+        Math.min(
+            ...candidates.map(candidate => candidate.playCountSpread)
+        );
+
+    const candidatesWithBestPlayCountSpread =
+        candidates.filter(
+            candidate =>
+                candidate.playCountSpread === bestPlayCountSpread
+        );
+
+    const bestPairRepeatCount =
+        Math.min(
+            ...candidatesWithBestPlayCountSpread.map(
+                candidate => candidate.pairRepeatCount
+            )
+        );
+
+    const bestCandidates =
+        candidatesWithBestPlayCountSpread
+            .filter(
+                candidate =>
+                    candidate.pairRepeatCount === bestPairRepeatCount
+            )
+            .sort(
+                (a, b) => b.score - a.score
+            );
 
     const topCandidates =
-        candidates.slice(
+        bestCandidates.slice(
             0,
-            Math.min(
-                10,
-                candidates.length
-            )
+            Math.min(10, bestCandidates.length)
         );
 
     return topCandidates[
@@ -3329,6 +3584,36 @@ function generateBestCandidateForPlayers(
             * topCandidates.length
         )
     ];
+
+}
+
+function getProjectedPlayCountSpread(candidate) {
+
+    const playingPlayerIds = new Set(
+        candidate.courts.flatMap(
+            court => [...court.teamA, ...court.teamB]
+        ).map(player => player.id)
+    );
+
+    const projectedPlayCounts =
+        (candidate.balancePlayers || appData.participants)
+            .map(
+                player =>
+                    (Number(player.playCount) || 0) +
+                    Number(playingPlayerIds.has(player.id))
+            );
+
+    const averagePlayCount =
+        projectedPlayCounts.reduce(
+            (total, playCount) => total + playCount,
+            0
+        ) / Math.max(1, projectedPlayCounts.length);
+
+    return projectedPlayCounts.reduce(
+        (spread, playCount) =>
+            spread + (playCount - averagePlayCount) ** 2,
+        0
+    );
 
 }
 
@@ -3344,8 +3629,15 @@ function createCandidateForPlayers(
     const requiredPlayers =
         courtCount * 4;
 
+    const pairSettingRestPlayerIds =
+        getPairSettingRestPlayerIds();
+
     const eligiblePlayers =
-        players.filter(player => !player.forceRest);
+        players.filter(
+            player =>
+                !player.forceRest &&
+                !pairSettingRestPlayerIds.has(player.id)
+        );
 
     if (
         eligiblePlayers.length < requiredPlayers
@@ -3353,34 +3645,26 @@ function createCandidateForPlayers(
         return null;
     }
 
-    const forcedPlayers =
-        shuffle(
-            getPriorityPlayers(eligiblePlayers)
-        );
+    const selectionUnits =
+        createCandidateSelectionUnits(eligiblePlayers);
 
     const selectedPlayers =
-        forcedPlayers.slice(0, requiredPlayers);
-
-    const remainingPlayers =
-        shuffle(
-            eligiblePlayers.filter(
-                player => !selectedPlayers.includes(player)
-            )
-        ).slice(
-            0,
-            requiredPlayers + 4 - selectedPlayers.length
+        selectCandidatePlayers(
+            selectionUnits,
+            requiredPlayers
         );
 
-    remainingPlayers.forEach(player => {
+    if (selectedPlayers.length < requiredPlayers) {
+        return null;
+    }
 
-        if (selectedPlayers.length < requiredPlayers) {
-            selectedPlayers.push(player);
-        }
+    const teams = createPairSettingTeams(selectedPlayers);
 
-    });
+    if (teams.length !== requiredPlayers / 2) {
+        return null;
+    }
 
-    const shuffled =
-        shuffle(selectedPlayers);
+    const shuffledTeams = shuffle(teams);
 
     const courts = [];
 
@@ -3403,15 +3687,9 @@ function createCandidateForPlayers(
             matchNo:
                 (appData.completedMatchesByCourt[courtNo - 1] || 0) + 1,
 
-            teamA:[
-                shuffled[pos++],
-                shuffled[pos++]
-            ],
+            teamA: shuffledTeams[pos++],
 
-            teamB:[
-                shuffled[pos++],
-                shuffled[pos++]
-            ],
+            teamB: shuffledTeams[pos++],
 
             status:
                 "playing"
@@ -3423,6 +3701,206 @@ function createCandidateForPlayers(
     return {
         courts
     };
+
+}
+
+function createCandidateSelectionUnits(players) {
+
+    const playersByPairSetting = new Map();
+    const pairedPlayerIds = new Set();
+    const units = [];
+
+    players.forEach(player => {
+        const pairSetting = player.pairSetting;
+
+        if (!pairSetting || pairSetting === "-") {
+            return;
+        }
+
+        if (!playersByPairSetting.has(pairSetting)) {
+            playersByPairSetting.set(pairSetting, []);
+        }
+
+        playersByPairSetting.get(pairSetting).push(player);
+    });
+
+    playersByPairSetting.forEach(groupPlayers => {
+        const isPairSettingActive =
+            getPairSettingParticipantCount(groupPlayers[0].pairSetting) >= 2;
+
+        if (!isPairSettingActive) {
+            return;
+        }
+
+        const shuffledGroupPlayers = shuffle(groupPlayers);
+
+        for (let index = 0; index + 1 < shuffledGroupPlayers.length; index += 2) {
+            const pair = [
+                shuffledGroupPlayers[index],
+                shuffledGroupPlayers[index + 1]
+            ];
+
+            units.push(pair);
+            pair.forEach(player => pairedPlayerIds.add(player.id));
+        }
+    });
+
+    players.forEach(player => {
+        if (
+            (
+                !player.pairSetting ||
+                player.pairSetting === "-" ||
+                getPairSettingParticipantCount(player.pairSetting) < 2
+            ) &&
+            !pairedPlayerIds.has(player.id)
+        ) {
+            units.push([player]);
+        }
+    });
+
+    return units;
+
+}
+
+function selectCandidatePlayers(units, requiredPlayers) {
+
+    const shuffledUnits =
+        shuffle(units);
+    const selectionWays =
+        Array.from(
+            { length: shuffledUnits.length + 1 },
+            () => Array(requiredPlayers + 1).fill(0)
+        );
+
+    selectionWays[shuffledUnits.length][0] = 1;
+
+    for (
+        let unitIndex = shuffledUnits.length - 1;
+        unitIndex >= 0;
+        unitIndex--
+    ) {
+        const unitSize = shuffledUnits[unitIndex].length;
+
+        for (let seats = 0; seats <= requiredPlayers; seats++) {
+            selectionWays[unitIndex][seats] =
+                selectionWays[unitIndex + 1][seats] +
+                (
+                    seats >= unitSize
+                        ? selectionWays[unitIndex + 1][seats - unitSize]
+                        : 0
+                );
+        }
+    }
+
+    if (selectionWays[0][requiredPlayers] === 0) {
+        return [];
+    }
+
+    const selectedPlayers = [];
+    let remainingSeats = requiredPlayers;
+
+    for (
+        let unitIndex = 0;
+        unitIndex < shuffledUnits.length && remainingSeats > 0;
+        unitIndex++
+    ) {
+        const unit = shuffledUnits[unitIndex];
+        const includeWays =
+            remainingSeats >= unit.length
+                ? selectionWays[unitIndex + 1][remainingSeats - unit.length]
+                : 0;
+        const skipWays =
+            selectionWays[unitIndex + 1][remainingSeats];
+
+        if (
+            includeWays > 0 &&
+            (
+                skipWays === 0 ||
+                Math.random() < includeWays / (includeWays + skipWays)
+            )
+        ) {
+            selectedPlayers.push(...unit);
+            remainingSeats -= unit.length;
+        }
+    }
+
+    return remainingSeats === 0
+        ? selectedPlayers
+        : [];
+
+}
+
+function createPairSettingTeams(players) {
+
+    const playersByPairSetting = new Map();
+    const regularPlayers = [];
+
+    players.forEach(player => {
+        const pairSetting = player.pairSetting;
+
+        if (!pairSetting || pairSetting === "-") {
+            regularPlayers.push(player);
+            return;
+        }
+
+        if (getPairSettingParticipantCount(pairSetting) < 2) {
+            regularPlayers.push(player);
+            return;
+        }
+
+        if (!playersByPairSetting.has(pairSetting)) {
+            playersByPairSetting.set(pairSetting, []);
+        }
+
+        playersByPairSetting.get(pairSetting).push(player);
+    });
+
+    if (
+        [...playersByPairSetting.values()]
+            .some(groupPlayers => groupPlayers.length % 2 !== 0)
+    ) {
+        return [];
+    }
+
+    const teams = [];
+
+    playersByPairSetting.forEach(groupPlayers => {
+        const shuffledGroupPlayers = shuffle(groupPlayers);
+
+        for (let index = 0; index + 1 < shuffledGroupPlayers.length; index += 2) {
+            teams.push([
+                shuffledGroupPlayers[index],
+                shuffledGroupPlayers[index + 1]
+            ]);
+        }
+    });
+
+    const shuffledRegularPlayers = shuffle(regularPlayers);
+
+    if (shuffledRegularPlayers.length % 2 !== 0) {
+        return [];
+    }
+
+    for (let index = 0; index + 1 < shuffledRegularPlayers.length; index += 2) {
+        teams.push([
+            shuffledRegularPlayers[index],
+            shuffledRegularPlayers[index + 1]
+        ]);
+    }
+
+    return teams;
+
+}
+
+function getPairSettingParticipantCount(pairSetting) {
+
+    if (!pairSetting || pairSetting === "-") {
+        return 0;
+    }
+
+    return appData.participants.filter(
+        player => player.pairSetting === pairSetting
+    ).length;
 
 }
 
@@ -3970,7 +4448,7 @@ function generateRound(
     const players =
         getSelectablePlayers();
 
-    const candidate = appData.settings.groupMode
+    const candidate = shouldScopePlayersByGroup(players)
         ? generateGroupScopedCandidate(players, courtIndices)
         : generateBestCandidateForPlayers(
             players,
@@ -3981,6 +4459,36 @@ function generateRound(
     return applyCandidate(
         candidate
     );
+
+}
+
+function shouldScopePlayersByGroup(players) {
+
+    if (!appData.settings.groupMode) {
+        return false;
+    }
+
+    const groupsByPairSetting = new Map();
+
+    players.forEach(player => {
+        const pairSetting = player.pairSetting;
+
+        if (!pairSetting || pairSetting === "-") {
+            return;
+        }
+
+        if (!groupsByPairSetting.has(pairSetting)) {
+            groupsByPairSetting.set(pairSetting, new Set());
+        }
+
+        groupsByPairSetting.get(pairSetting).add(player.group);
+    });
+
+    const hasCrossGroupPairSetting =
+        [...groupsByPairSetting.values()]
+            .some(groups => groups.size > 1);
+
+    return !hasCrossGroupPairSetting;
 
 }
 
@@ -4364,7 +4872,7 @@ async function createNextCourtRound(
             courtIndex
         );
 
-    const candidate = appData.settings.groupMode
+    const candidate = shouldScopePlayersByGroup(availablePlayers)
         ? generateGroupScopedCandidate(
             availablePlayers,
             [courtIndex]
@@ -4623,6 +5131,16 @@ function normalizeParticipants() {
             }
 
             if (
+                typeof player.pairSetting !== "string" ||
+                (
+                    player.pairSetting !== "-" &&
+                    !getConfiguredPairSettingNames().includes(player.pairSetting)
+                )
+            ) {
+                player.pairSetting = "-";
+            }
+
+            if (
                 player.playCount == null
             ) {
                 player.playCount = 0;
@@ -4708,6 +5226,9 @@ function normalizeData() {
 
     normalizedSettings.groupNames =
         normalizeGroupNames(normalizedSettings.groupNames);
+
+    normalizedSettings.pairSettingNames =
+        normalizePairSettingNames(normalizedSettings.pairSettingNames);
 
     normalizedSettings.groupMode =
         normalizedSettings.groupMode === true;
